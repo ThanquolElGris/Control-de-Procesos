@@ -54,6 +54,17 @@
 - **To Workspace:** *Save format* = **Array**, con los nombres `r`, `y`, `u`, `e`.
 - **Model Settings** (Ctrl+E): *Solver* = auto (ode45). Con retardos o dinámicas rápidas, fijar *Max step size*.
 
+**Cómo leer los diagramas**
+
+| Símbolo | Significado |
+|---|---|
+| `[ Nombre ]` | Un bloque de Simulink |
+| `──►` | Línea de señal, en el sentido de la flecha |
+| `( Σ )` | Bloque Sum. Los signos junto a sus entradas (`+`, `−`) indican cómo entra cada señal |
+| `▲` / `▼` | Una señal que entra al Σ desde abajo o desde arriba (realimentación o perturbación) |
+| `┬` / `┌ ┘ └` | Punto de derivación: la misma señal se lleva a otro lugar (clic derecho y arrastrar desde una línea) |
+| Texto sobre una línea (`e`, `u`, `C`…) | Nombre de esa señal. Se puede escribir en Simulink con doble clic sobre la línea |
+
 **Salidas mínimas de cada modelo** (lo que piden las guías):
 1. Referencia y salida: *Mux* de 2 entradas → *Scope*.
 2. Acción de control `u` → *Scope*.
@@ -74,6 +85,22 @@ Planta (Smith & Corripio, ej. 6-1.1). El tiempo está en **minutos**.
             + ▲ −                                                                  +                   │
               └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| R | Referencia (set point) de la temperatura, en %TO. Escalón de 1 en t = 1 |
+| F | Perturbación: cambio en el caudal de alimentación del tanque (ft³/min) |
+| e | Error = R − C (lo que ve el controlador) |
+| m | Salida del controlador (%CO): la señal que va a la válvula |
+| Gv | Válvula de vapor: convierte m en caudal de vapor w |
+| w | Caudal de vapor (lb/min) |
+| Gs | Proceso: efecto del vapor sobre la temperatura del tanque |
+| Gf | Proceso: efecto de la alimentación F sobre la temperatura (ganancia negativa: más alimentación fría → baja T) |
+| T | Temperatura real del tanque (°F), suma de ambos efectos |
+| H | Sensor-transmisor de temperatura |
+| C | Temperatura **medida** (%TO) = salida de H. Es la señal que se realimenta al Σ del error |
 
 | Bloque | Tipo | Parámetros |
 |---|---|---|
@@ -116,6 +143,15 @@ Planta (Smith & Corripio, ej. 6-1.1). El tiempo está en **minutos**.
        └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| R, F, T, C | Iguales que en CP1-A |
+| Ref | Entrada 1 del PID 2DOF: la referencia R |
+| y | Entrada 2 del PID 2DOF: la medición C (con c = 0 la acción D se calcula solo con ella) |
+| u | Salida del PID ya saturada (±3): es el mando m que va a la válvula |
+
 > **¿Qué es C?** Es la **temperatura medida**: la salida del sensor-transmisor $H(s)=\frac{1}{0.75s+1}$, en %TO. No es un bloque. Es la **línea** que sale de H y vuelve a la entrada `y` del PID 2DOF (el camino de realimentación). La salida del proceso es T, y C es lo que el controlador "ve" de T a través del sensor. Es la misma C de $C(s)=\frac{G_cG_1}{1+G_cG_1}R(s)+\frac{G_2}{1+G_cG_1}F(s)$ de la guía CP-1.
 
 | Bloque | Parámetros |
@@ -135,6 +171,19 @@ Planta (Smith & Corripio, ej. 6-1.1). El tiempo está en **minutos**.
         │   C ──►[Gain −1]──►[ Transfer Fcn  D·N·s/(s+N) ]── ud ─────────┘
         └──────── C
 ```
+
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| e | Error R − C |
+| up = P·e | Acción proporcional |
+| ui | Acción integral (salida del Integrator) |
+| ud | Acción derivativa filtrada, calculada sobre −C (no sobre e) para evitar el golpe al cambiar R |
+| u | Mando calculado = up + ui + ud (antes de saturar) |
+| us | Mando real, ya saturado a ±3: es lo que entra a Gv |
+| us − u | Diferencia por saturación. Multiplicada por Kb se resta al integrador (anti-windup): si no hay saturación vale 0 |
+| Kb | Ganancia de back-calculation (anti-windup) |
 
 | Bloque | Tipo | Parámetros |
 |---|---|---|
@@ -178,6 +227,17 @@ $$10\,\dot x_3 = 0.6F_1 + x_2 - x_3(F_1+1),\qquad F_3=F_1+1$$
                    └──►[Bias +1]──► F3 ──►[Scope]
 ```
 
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| F1 | Caudal de entrada 1 (cm³/min), el manipulable (tiene válvula). Operación: 3 |
+| x2 | Composición de la corriente 2, perturbación (la fija el proceso anterior). Operación: 0.4 |
+| x3 | Composición de salida del mezclador (salida a controlar). Operación: 0.55 |
+| F3 | Caudal de salida = F1 + F2 = F1 + 1. Operación: 4 |
+| Fcn | Calcula dx3/dt a partir del balance de masa parcial |
+| Integrator | Integra dx3/dt para obtener x3. La condición inicial 0.55 es el punto de operación |
+
 | Bloque | Tipo | Parámetros |
 |---|---|---|
 | Step F1 | Step | Time = 1, Initial = 3, Final = 3.3 (para el escalón de x2: Final = 3) |
@@ -201,6 +261,20 @@ $$10\,\dot x_3 = 0.6F_1 + x_2 - x_3(F_1+1),\qquad F_3=F_1+1$$
                                    └─────────────────────────┼─────────────────────────────────────────────────┘
                                                              └──►[Scope u]  (verificar |u| ≤ 2)
 ```
+
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| r | Referencia de **variación** de x3: escalón de 0.02 (se trabaja en desviaciones respecto del punto de operación) |
+| Prefiltro | 1/(Ti·s+1): suaviza la referencia para cancelar el cero del PI (solo en el diseño B) |
+| e | Error = referencia (filtrada) − x3 |
+| u | Variación del caudal F1 que ordena el PI (ΔF1). Debe quedar dentro de ±2 |
+| Saturation | Límite físico del mando (±2). Se pone para verificar que el diseño no lo alcanza |
+| 0.05/(10s+4) | Planta: efecto de ΔF1 sobre Δx3 |
+| d | Perturbación: variación de x2, escalón de 0.01 |
+| 1/(10s+4) | Efecto de Δx2 sobre Δx3 |
+| x3 | Variación de la composición de salida (Δx3), la variable controlada |
 
 | Bloque | Tipo | Diseño A (cancelación) | Diseño B (2º orden + prefiltro) |
 |---|---|---|---|
@@ -230,6 +304,17 @@ $$10\,\dot x_3 = 0.6F_1 + x_2 - x_3(F_1+1),\qquad F_3=F_1+1$$
  [Ramp r]──┘                    + ▲ −                       + ▲+                   │
                                   └────────────────────────────────────────────────┘
 ```
+
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| r | Referencia: escalón (Step) o rampa (Ramp), según el Manual Switch |
+| e | Error r − y |
+| u | Salida del controlador MO o MS |
+| d | Perturbación que se suma a la **entrada de la planta** (en el mando) |
+| Gp | Planta Gp1 = 100/(s(s+10)) o Gp2 = 2/(s(0.8s+1)(s+0.5)) |
+| y | Salida de la planta (realimentación unitaria, Kr = 1) |
 
 | Bloque | Parámetros |
 |---|---|
@@ -264,6 +349,18 @@ $$10\,\dot x_3 = 0.6F_1 + x_2 - x_3(F_1+1),\qquad F_3=F_1+1$$
               └──────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| r | Referencia de Y (escalón 1) |
+| e | Error r − Y |
+| u | Acción de control, saturada a ±10 dentro del PID |
+| d | Perturbación de +1 sumada a la acción de control (entrada de 1/(0.01s+1)) |
+| 1/(0.01s+1) | Primer bloque de la planta (el más rápido: Tu = 0.01) |
+| V | Variable intermedia, salida del 2º bloque. Aquí no se mide (sí en la cascada) |
+| Y | Salida final a controlar |
+
 | Bloque | Parámetros |
 |---|---|
 | Step r | Time = 0, Final = 1 |
@@ -292,6 +389,16 @@ $$10\,\dot x_3 = 0.6F_1 + x_2 - x_3(F_1+1),\qquad F_3=F_1+1$$
               └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| r | Referencia de Y |
+| PID externo | Controla Y. Su salida **Vref** es la referencia del lazo interno |
+| Vref | Valor que se le pide a la variable intermedia V |
+| PID interno | Controla V (sensor en V). Su salida u es el mando real (±10) |
+| u, d, V, Y | Iguales que en CP3-3a |
+
 | Bloque | Parámetros |
 |---|---|
 | PID externo | Controller = **PI**: **P = 2.5, I = 25** (sin límite) |
@@ -316,6 +423,18 @@ $$10\,\dot x_3 = 0.6F_1 + x_2 - x_3(F_1+1),\qquad F_3=F_1+1$$
               │                         └──────────────────────────────────────────────────────────┘                            │
               └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| r | Referencia de la salida C |
+| Gc2 | Controlador externo (MO → PD o MS → PID). Su salida Vref es la referencia del interno |
+| Gc1 | Controlador interno (PI por MO). Su salida u es el mando real, limitado a ±5000 |
+| d | Perturbación de 1000 en la acción de control (t = 5) |
+| V | Variable intermedia medida (salida de 1/(0.01s+1)), realimentada al lazo interno |
+| 1/(2s+1) · 1/s | Parte lenta de la planta, con el integrador |
+| C | Salida final, realimentada al lazo externo |
 
 | Bloque | Parámetros |
 |---|---|
@@ -346,6 +465,20 @@ $$10\,\dot x_3 = 0.6F_1 + x_2 - x_3(F_1+1),\qquad F_3=F_1+1$$
                            └────[1/s]◄─────┘
 ```
 
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| SP | Set point (referencia) que recibe el subsistema |
+| med | Medición de la variable controlada |
+| e | Error SP − med (solo alimenta las acciones P e I) |
+| ui | Salida del integrador (acción integral) |
+| ud | Acción derivativa filtrada, calculada sobre −med |
+| u | Suma P + ui + ud, antes de saturar |
+| us / U | Mando saturado = salida del subsistema |
+| us − u | Diferencia que, multiplicada por Kb, descarga el integrador cuando hay saturación (anti-windup) |
+| N | Coeficiente del filtro de la derivada. La constante del filtro 1/N debe ser menor que Tu |
+
 - Se crea como *Subsystem* con **In1 = SP**, **In2 = med** y **Out1 = U**.
 - Los parámetros P, I, D, N, Kb y los límites se pasan como variables del workspace, o con una *Mask* (clic derecho → Mask → Create Mask).
 - Sirve para todos los PID de CP-3 si se quiere implementar "a mano".
@@ -362,6 +495,18 @@ $$10\,\dot x_3 = 0.6F_1 + x_2 - x_3(F_1+1),\qquad F_3=F_1+1$$
                         dist ─────┘
 ```
 
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| man | Entrada manipulable de la planta (mando). Aquí se aplica un escalón de 1 en lazo abierto |
+| dist | Entrada de perturbación. En la identificación se deja en 0 (Constant 0) |
+| Gv | Actuador (válvula), 2/(s+2) |
+| G1, G2 | Etapas del proceso |
+| med1 | Medición intermedia (salida de G1) |
+| med2 | Medición de la salida final (después de G2 y del retardo de 1 s) |
+| y | Nombre de la variable To Workspace donde se guarda med2 para calcular K, T y L |
+
 Luego:
 ```matlab
 [K,T,L] = port_datos(out.tout, out.y, 1, 1)
@@ -377,6 +522,18 @@ Para el lazo externo (b3), identificar con el lazo interno cerrado (ver CP4-1b),
             + ▲ −                                                  +                                                │
               └─────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| r | Referencia de med2 |
+| e | Error r − med2 |
+| man | Salida del PID = mando que entra a Gv |
+| dist | Perturbación: se suma entre Gv y G1 (escalón de 1 en t = 60) |
+| med1 | Salida de G1 (en el lazo único no se usa) |
+| Transport Delay | Retardo puro de 1 s (el e^−s del enunciado) |
+| med2 | Salida medida a controlar, realimentada al Σ del error |
 
 | Bloque | Parámetros |
 |---|---|
@@ -403,6 +560,17 @@ Para el lazo externo (b3), identificar con el lazo interno cerrado (ver CP4-1b),
               └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| r | Referencia de med2 |
+| PID externo | Controla med2. Su salida r1 es la referencia del lazo interno |
+| r1 | Valor que se le pide a med1 |
+| PI interno | Controla med1. Su salida man es el mando real |
+| med1 | Medición intermedia, realimentada al lazo interno. La perturbación entra **dentro** de este lazo |
+| med2, dist | Iguales que en CP4-1a |
+
 | Bloque | Parámetros |
 |---|---|
 | PI interno | Controller = **PI**: **P = 0.4, I = 0.2** |
@@ -420,6 +588,18 @@ Para el lazo externo (b3), identificar con el lazo interno cerrado (ver CP4-1b),
             + ▲ −                                                                        +                               │
               └──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| r | Referencia de med2 |
+| e | Error r − med2 |
+| man | Mando (salida del PID), entra a Gv |
+| dist | Perturbación: se suma **después de G1** (en med1), antes del integrador 4/s |
+| med1 | Salida de G1 + perturbación (no se usa en el lazo único) |
+| G2 = 4/s | Integrador del proceso: la planta es tipo 1 |
+| med2 | Salida a controlar |
 
 | Bloque | Parámetros |
 |---|---|
@@ -446,6 +626,17 @@ Para el lazo externo (b3), identificar con el lazo interno cerrado (ver CP4-1b),
               │                              └───────────────────────────────────────────────────────┘                    │
               └───────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**Qué es cada señal / bloque del diagrama:**
+
+| Símbolo | Qué es |
+|---|---|
+| r | Referencia de med2 |
+| PI externo | Controla med2 (MS: P = 0.1875, I = 0.07031; o MO: solo P). Su salida r1 es la referencia del interno |
+| r1 | Valor que se le pide a med1 |
+| PI interno | Controla med1 (MO: P = 1, I = 0.5). Su salida man es el mando real |
+| med1 | Medición intermedia (incluye la perturbación), realimentada al lazo interno |
+| med2 | Salida final, realimentada al lazo externo |
 
 | Bloque | Parámetros |
 |---|---|
