@@ -116,6 +116,8 @@ Planta (Smith & Corripio, ej. 6-1.1). El tiempo está en **minutos**.
        └─────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+> **¿Qué es C?** Es la **temperatura medida**: la salida del sensor-transmisor $H(s)=\frac{1}{0.75s+1}$, en %TO. No es un bloque. Es la **línea** que sale de H y vuelve a la entrada `y` del PID 2DOF (el camino de realimentación). La salida del proceso es T, y C es lo que el controlador "ve" de T a través del sensor. Es la misma C de $C(s)=\frac{G_cG_1}{1+G_cG_1}R(s)+\frac{G_2}{1+G_cG_1}F(s)$ de la guía CP-1.
+
 | Bloque | Parámetros |
 |---|---|
 | PID Controller (2DOF) | Form = Parallel; **P = 8.1449, I = 2.8182, D = 3.7663, N = 20**; **b = 1, c = 0** (D sobre la medición); Output saturation: ☑ Limit output, **Upper = 3, Lower = −3**; Anti-windup = **back-calculation, Kb = 0.865** |
