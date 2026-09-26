@@ -49,15 +49,14 @@ Gcexms = minreal((4*Tu2*s+1)/(8*Tu2^2*s^2*(Tu2*s+1)*Go)) % b3) MS externo: 0.187
 Gcexmo = minreal(1/(2*Tu2*s*(Tu2*s+1)*Go))               %     MO externo: 0.1875 (P)
 
 Gin = feedback(Gcin*Gi, 1);
-figure; hold on; grid on
-step(feedback(Gcms*Gp,1), 12); step(feedback(Gcmo*Gp,1), 12);
-step(feedback(Gcexms*Gin*G2,1), 12); step(feedback(Gcexmo*Gin*G2,1), 12);
+figure;
+step(feedback(Gcms*Gp,1), feedback(Gcmo*Gp,1), feedback(Gcexms*Gin*G2,1), feedback(Gcexmo*Gin*G2,1), 12); grid on
 legend('MS','MO','cascada MS MO','cascada MO MO'); title('Ej. 2: escalón en la referencia')
 
 % Perturbación (entra en med1, antes de G2):
 %   lazo único:  Y/D = G2/(1 + Gc*Gv*G1*G2)
 %   cascada:     m1 = d - Gi*Gcin*(1 + Gcex*G2)*m1  ->  Y/D = G2/(1 + Gi*Gcin*(1 + Gcex*G2))
-figure; hold on; grid on
-step(feedback(G2, Gcms*Gi), 30);  step(feedback(G2, Gcmo*Gi), 30);
-step(G2*feedback(1, Gi*Gcin*(1 + Gcexms*G2)), 30);  step(G2*feedback(1, Gi*Gcin*(1 + Gcexmo*G2)), 30);
+figure;
+step(feedback(G2, Gcms*Gi), feedback(G2, Gcmo*Gi), ...
+     G2*feedback(1, Gi*Gcin*(1 + Gcexms*G2)), G2*feedback(1, Gi*Gcin*(1 + Gcexmo*G2)), 30); grid on
 legend('MS','MO','cascada MS MO','cascada MO MO'); title('Ej. 2: escalón en la perturbación')

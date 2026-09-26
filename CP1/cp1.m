@@ -46,10 +46,8 @@ pidIdeal = @(p) p(1)*(1 + tf(1,[p(2) 0]) + tf([p(3) 0],1));
 
 %% Pasos 5 a 11: evaluar cada controlador
 nombres = fieldnames(P);
-tsim = 0:0.01:40;
-figure('Name','Referencia');   hold on; grid on; title('Escalón en la referencia');
-figure('Name','Perturbación'); hold on; grid on; title('Escalón en la perturbación F');
-leg = {};
+tsim = (0:0.01:40)';
+Yr = []; Yd = []; leg = {};          % se calculan las curvas y se grafican al final con plot()
 for i = 1:numel(nombres)
     p = P.(nombres{i});
     fprintf('%-10s Kc = %.3f  Ti = %.3f  Td = %.3f\n', nombres{i}, p);
@@ -57,16 +55,17 @@ for i = 1:numel(nombres)
     if i <= 3, formas = {'real', 'ideal'}; end   % ZN y CC: ambas formas
     for j = 1:numel(formas)
         if strcmp(formas{j}, 'real'), Gc = pidReal(p); else, Gc = pidIdeal(p); end
-        Tr = feedback(Gc*G1, 1);        % C/R
-        Td_ = G2*feedback(1, Gc*G1);    % C/F
-        figure(2); step(Tr, tsim);
-        figure(3); step(Td_, tsim);
+        Tr  = feedback(Gc*G1, 1);        % C/R
+        Td_ = G2*feedback(1, Gc*G1);     % C/F
+        Yr(:,end+1) = step(Tr, tsim);    %#ok<SAGROW>
+        Yd(:,end+1) = step(Td_, tsim);   %#ok<SAGROW>
         leg{end+1} = sprintf('%s %s', strrep(nombres{i},'_','-'), formas{j}); %#ok<SAGROW>
         Sr = stepinfo(Tr);
         fprintf('   %-5s ref: Mp = %5.1f%%  ts = %5.2f min\n', formas{j}, Sr.Overshoot, Sr.SettlingTime);
     end
 end
-figure(2); legend(leg); figure(3); legend(leg);
+figure('Name','Referencia');   plot(tsim, Yr); grid on; legend(leg); title('Escalón en la referencia'); xlabel('t [min]')
+figure('Name','Perturbación'); plot(tsim, Yd); grid on; legend(leg); title('Escalón en la perturbación F'); xlabel('t [min]')
 
 %% Paso 12: ZN (Ku) serie -> ideal -> paralelo, para Simulink
 p = P.ZN_Ku;                       % [K'c T'i T'd]

@@ -44,15 +44,25 @@ GcB = KpB*tf([TiB 1], [TiB 0]);
 Pf  = tf(1, [TiB 1]);
 fprintf('B) wn = %.3f  Kp = %.2f  Ti = %.3f\n', wn, KpB, TiB);
 
-t = 0:0.01:40;
-figure('Name','2b');
+% Nota: se calculan las respuestas y se grafican con plot(). En MATLAB recientes,
+% step() dibuja un "chart" que se borra si se vuelve a llamar subplot().
+t = (0:0.01:40)';
 disenos = {GcA, 1; GcB, Pf};
+Y = zeros(numel(t), 2);  U = Y;  D = Y;
 for i = 1:2
     Gc = disenos{i,1}; P = disenos{i,2};
-    subplot(3,1,1); hold on; step(r0*P*feedback(Gc*G, 1), t);        % x3 / referencia
-    subplot(3,1,2); hold on; step(r0*P*feedback(Gc, G), t);          % u  / referencia
-    subplot(3,1,3); hold on; step(d0*Gd*feedback(1, Gc*G), t);       % x3 / perturbación
+    Y(:,i) = step(r0*P*feedback(Gc*G, 1), t);       % x3 / referencia
+    U(:,i) = step(r0*P*feedback(Gc, G), t);         % u  / referencia
+    D(:,i) = step(d0*Gd*feedback(1, Gc*G), t);      % x3 / perturbación
 end
-subplot(3,1,1); grid on; title('\Deltax3 ante escalón 0.02 en la referencia'); legend('A','B');
-subplot(3,1,2); grid on; title('Acción de control \DeltaF1'); yline(umax,'r--'); legend('A','B');
-subplot(3,1,3); grid on; title('\Deltax3 ante escalón 0.01 en la perturbación'); legend('A','B');
+figure('Name','2b');
+subplot(3,1,1); plot(t, Y); grid on; title('\Deltax3 ante escalón 0.02 en la referencia'); legend('A','B');
+subplot(3,1,2); plot(t, U); grid on; title('Acción de control \DeltaF1'); yline(umax,'r--');
+                legend('A','B','límite'); xlabel('t [min]');
+subplot(3,1,3); plot(t, D); grid on; title('\Deltax3 ante escalón 0.01 en la perturbación'); legend('A','B');
+xlabel('t [min]');
+for i = 1:2
+    S = stepinfo(Y(:,i), t, r0);
+    fprintf('Diseño %s: ts = %.2f min  Mp = %.1f%%  |u|max = %.3f  pico pert = %.5f\n', ...
+            char('A'+i-1), S.SettlingTime, S.Overshoot, max(abs(U(:,i))), max(abs(D(:,i))));
+end

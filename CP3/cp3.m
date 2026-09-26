@@ -23,12 +23,11 @@ for i = 1:2
     Gco = MO(Gp, Tu), Gcs = MS(Gp, Tu)
     tt = t(t <= tf_);
     figure('Name', sprintf('Ej2 - Gp%d', i));
-    subplot(3,1,1), hold on, step(feedback(Gco*Gp,1), tt), step(feedback(Gcs*Gp,1), tt)
+    subplot(3,1,1), step(feedback(Gco*Gp,1), feedback(Gcs*Gp,1), tt)
     title('Escalón en la referencia'), legend('MO','MS'), grid on
-    subplot(3,1,2), hold on
-    lsim(feedback(Gco*Gp,1), tt, tt), lsim(feedback(Gcs*Gp,1), tt, tt)
+    subplot(3,1,2), lsim(feedback(Gco*Gp,1), feedback(Gcs*Gp,1), tt, tt)
     title('Rampa en la referencia'), legend('MO','MS'), grid on
-    subplot(3,1,3), hold on, step(feedback(Gp,Gco), tt), step(feedback(Gp,Gcs), tt)
+    subplot(3,1,3), step(feedback(Gp,Gco), feedback(Gp,Gcs), tt)
     title('Escalón en la perturbación (entrada de la planta)'), legend('MO','MS'), grid on
     % Errores en estado estable (verificación)
     for G = {Gco, Gcs}
@@ -47,13 +46,13 @@ Gpid = MO(G3, 0.01)                         % = 10 + 50/s + 0.5 s
 Gc1 = MO(Ga*Gb, 0.01)                       % = 5 + 50/s
 Gc2 = MO(tf(1,[0.02 1])*Gc_, 0.02)          % = 2.5 + 25/s
 Gin = feedback(Gc1*Ga*Gb, 1);
-figure('Name','Ej3 lineal'); hold on; grid on
-step(feedback(Gpid*G3, 1), 0.5); step(feedback(Gc2*Gin*Gc_, 1), 0.5); legend('PID único','Cascada')
+figure('Name','Ej3 lineal');
+step(feedback(Gpid*G3, 1), feedback(Gc2*Gin*Gc_, 1), 0.5); grid on; legend('PID único','Cascada')
 % Perturbación en el mando: entra en la entrada de Ga
-figure('Name','Ej3 perturbación'); hold on; grid on
-step(feedback(G3, Gpid), 1);                          % Y/D con un solo PID
+% Y/D con un solo PID:  feedback(G3, Gpid)
 % Cascada: v = Ga*Gb*(d - Gc1*v - Gc1*Gc2*Gc_*v)  ->  Y/D = Gc_*Ga*Gb/(1 + Ga*Gb*Gc1*(1 + Gc2*Gc_))
-step(Gc_*feedback(Ga*Gb, Gc1*(1 + Gc2*Gc_)), 1);
+figure('Name','Ej3 perturbación');
+step(feedback(G3, Gpid), Gc_*feedback(Ga*Gb, Gc1*(1 + Gc2*Gc_)), 1); grid on
 legend('PID único','Cascada');
 % Saturación ±10 y antiwindup: usar el modelo Simulink (ver README).
 
@@ -65,5 +64,5 @@ Gc2mo = MO(Go, 0.02)                                  % = 25 + 50 s (PD)
 Gc2ms = MS(Go, 0.02)                                  % = 650 + 312.5/s + 50 s (PID)
 Ginner = feedback(Gc1*Gi, 1);
 Gext = Ginner*tf(1,[2 1])*tf(1,[1 0]);
-figure('Name','Ej4 lineal'); hold on; grid on
-step(feedback(Gc2mo*Gext, 1), 3); step(feedback(Gc2ms*Gext, 1), 3); legend('Gc2 MO','Gc2 MS')
+figure('Name','Ej4 lineal');
+step(feedback(Gc2mo*Gext, 1), feedback(Gc2ms*Gext, 1), 3); grid on; legend('Gc2 MO','Gc2 MS')

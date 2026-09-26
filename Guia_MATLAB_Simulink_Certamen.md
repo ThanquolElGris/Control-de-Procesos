@@ -121,9 +121,9 @@ t = 0:0.01:100;
 y = step(Gp, t);
 [K, T, L] = port_datos(t, y, 1, 0);
 Gport = tf(K, [T 1], 'InputDelay', L);
-figure, step(Gp, Gport, t), legend('planta','PORT'), grid on
-% Marcar los puntos en el gráfico:
-hold on, plot([L+T/3, L+T], K*[0.283 0.632], 'ro')
+yp = step(Gport, t);
+figure, plot(t, y, t, yp, '--', [L+T/3, L+T], K*[0.283 0.632], 'ro'), grid on
+legend('planta','PORT','t_{28}, t_{63}'), xlabel('t')
 
 % b) Desde Simulink (experimento en lazo abierto, esquema 5.1): escalón dU en t0
 out = sim('identificacion');
@@ -147,12 +147,13 @@ c4 = sintonia('IAE-ref', 'PID', K, T, L);
 c5 = sintonia('ITAE-pert','PID', K, T, L);
 N  = 100;
 metodos = {c1, c2, c3, c4, c5};
-figure; hold on; grid on
+t = (0:0.01:40)';  Y = zeros(numel(t), numel(metodos));
 for k = 1:numel(metodos)
     c = metodos{k};
     C = pid(c.P, c.I, c.D, 1/N);
-    step(feedback(C*Gp, H), 40);                        % referencia
+    Y(:,k) = step(feedback(C*Gp, H), t);                % referencia
 end
+figure, plot(t, Y), grid on
 legend(cellfun(@(c) c.metodo, metodos, 'UniformOutput', false))
 % Idem para la perturbación: step(Gd*feedback(1, C*Gp*H), 40)
 ```
@@ -372,7 +373,10 @@ Para **comparar varias estrategias** en un gráfico: guardar cada `out` en una v
 9. **Escalón en t = 0 en Simulink:** el sobrepaso y $t_s$ calculados desde los datos quedan corridos. Aplicar en t = 1 y restar.
 10. **`minreal`** después de cancelar polos y ceros (MO/MS). Sin él quedan polos y ceros "fantasma" y `tf2pid` no identifica el controlador.
 11. **Tu mal elegido:** es la **menor** constante. `damp(Gp)` lista las constantes de tiempo.
-12. **Filtro derivativo demasiado lento:** si $1/N$ es comparable a $T_u$, el MO/MS se degrada (CP-3). Usar $N\gtrsim10/T_u$.
+12. **Gráficos vacíos al combinar `step`/`lsim` con `subplot` o `hold on`:** en versiones recientes de MATLAB, `step()` sin salidas dibuja un objeto *chart*. Si después se vuelve a llamar `subplot(3,1,k)` en la misma posición, el chart se borra y queda un eje vacío (ejes 0–1 y el aviso *"Ignoring extra legend entries"*). Hay dos soluciones:
+    - para varias curvas en un mismo gráfico, una sola llamada con varios sistemas: `step(sys1, sys2, t)`;
+    - o, lo más seguro, calcular y luego graficar: `y = step(sys, t); plot(t, y)`.
+13. **Filtro derivativo demasiado lento:** si $1/N$ es comparable a $T_u$, el MO/MS se degrada (CP-3). Usar $N\gtrsim10/T_u$.
 
 ---
 
