@@ -128,6 +128,8 @@ Planta (Smith & Corripio, ej. 6-1.1). El tiempo está en **minutos**.
 | ITAE-ref | 2.171 | 10.847 | 0.515 | **2.171** | **0.200** | **1.118** |
 | ITAE-pert | 3.581 | 2.765 | 0.568 | **3.581** | **1.295** | **2.034** |
 
+> **¿Dónde van $K_c$, $T_i$, $T_d$?** En ninguna parte del bloque si se usa *Form = Parallel*. Son valores intermedios (forma ideal) que sirven para **calcular** P, I y D. En el bloque solo se escriben **P, I, D y N** (las columnas en negrita). Si se prefiere escribirlos directamente, se cambia *Form = Ideal*. Ahí el bloque es $P(1+I\frac1s+D\,s)$, así que va **P = $K_c$**, **I = $1/T_i$** y **D = $T_d$**. Por ejemplo, para ZN-Ku: P = 8.145, I = 1/2.890 = 0.346, D = 0.462.
+
 > Para ver el efecto de usar ZN "en la forma equivocada", también se puede poner el PID en *Form = Ideal*: P = $K'_c$, I = $1/T'_i$, D = $T'_d$, con los valores serie (ZN-Ku: 6.516, 1/2.312, 0.578).
 
 ## Modelo CP1-B: PID práctico (paso 14): saturación ±3, D sobre la medición, filtro y anti-windup
