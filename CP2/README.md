@@ -170,9 +170,38 @@ El mínimo que no satura (con prefiltro) es $t_{ss}\approx9.34$ min. Se toma **$
 
 ![2b](p2_control.png)
 
-Funciones de transferencia ante la perturbación:
-- **A:** $\dfrac{X_3}{X_2}=\dfrac{G_d}{1+G_cG}=\dfrac{0.5\,s}{(2.5s+1)(2s+1)}$. Aparece el **polo lento de la planta** ($\tau=2.5$), porque ante la perturbación no hay cancelación.
-- **B:** $\dfrac{X_3}{X_2}=\dfrac{0.1\,s}{s^2+0.842s+0.362}$ (con $t_{ss}=9.5$). Tiene los **mismos polos** que ante la referencia.
+### Funciones de transferencia de lazo cerrado (cómo se obtienen)
+
+Aquí la perturbación $x_2$ **no** entra a la entrada de la planta, sino por su propio camino $G_d$ que se suma en la salida:
+```
+          E       F1              X2 ─► Gd ─┐
+ R ─►(+)─► Gc ─► [sat] ─► G ─────────────►(+)─┬─► X3
+      ▲-                                       │
+      └────────────────────────────────────────┘
+```
+Ecuaciones: $E=R-X_3$, $F_1=G_cE$, $X_3=G\,F_1+G_d\,X_2$. Reemplazando:
+$$X_3=GG_c(R-X_3)+G_dX_2\ \Rightarrow\ X_3\,(1+G_cG)=G_cG\,R+G_d\,X_2$$
+$$\frac{X_3}{R}=\frac{G_cG}{1+G_cG},\qquad \frac{X_3}{X_2}=\frac{G_d}{1+G_cG},\qquad \frac{F_1}{R}=\frac{G_c}{1+G_cG}$$
+(Regla: camino directo desde la entrada / (1 + ganancia del lazo). Desde $X_2$ el camino directo es $G_d$.)
+
+**Diseño A** ($G_c=100\frac{2.5s+1}{2.5s}$, $G=\frac{0.0125}{2.5s+1}$, $G_d=\frac{0.25}{2.5s+1}$):
+1. Lazo: $G_cG=100\dfrac{2.5s+1}{2.5s}\cdot\dfrac{0.0125}{2.5s+1}=\dfrac{1.25}{2.5s}=\dfrac{0.5}{s}$ (se cancela el $(2.5s+1)$).
+2. Referencia: $\dfrac{X_3}{R}=\dfrac{0.5/s}{1+0.5/s}=\dfrac{0.5}{s+0.5}=\dfrac{1}{2s+1}$ → $T_{LC}=2$, $t_s\approx8$ min.
+3. Perturbación: $\dfrac{X_3}{X_2}=\dfrac{0.25}{2.5s+1}\cdot\dfrac{s}{s+0.5}=\dfrac{0.25\,s}{(2.5s+1)(s+0.5)}=\dfrac{0.5\,s}{(2.5s+1)(2s+1)}$.
+   Aparece el **polo lento de la planta** ($\tau=2.5$), porque $G_d$ tiene el mismo polo y ahí no pasa por el controlador: no hay cancelación.
+4. Mando: $\dfrac{F_1}{R}=\dfrac{G_c}{1+G_cG}=100\dfrac{2.5s+1}{2.5s}\cdot\dfrac{s}{s+0.5}=\dfrac{40\,(2.5s+1)}{s+0.5}$. En $t=0^+$ (teorema del valor inicial, $s\to\infty$) vale $100$ por unidad de referencia → $100\cdot0.02=2$; en estado estable ($s=0$) vale $80$ → $80\cdot0.02=1.6$. Son los valores de la sección a).
+
+**Diseño B** ($K_p=88.42$, $T_i=1.222$), sin cancelación. Se usa $d_cd_p+n_cn_p$ (numeradores y denominadores del controlador y la planta):
+1. Ecuación característica: $T_is(2.5s+1)+K_p\cdot0.0125\,(T_is+1)=0$. Dividiendo por $2.5T_i$:
+   $$s^2+\frac{1+0.0125K_p}{2.5}s+\frac{0.0125K_p}{2.5T_i}=s^2+0.842s+0.362$$
+   ($2\zeta\omega_n=0.842$, $\omega_n^2=0.362$ → $\omega_n=0.602$, $\zeta=0.7$ ✔).
+2. Referencia sin prefiltro: $\dfrac{X_3}{R}=\dfrac{0.362\,(1.222s+1)}{s^2+0.842s+0.362}=\dfrac{0.442s+0.362}{s^2+0.842s+0.362}$.
+   Con prefiltro $\frac{1}{1.222s+1}$ se cancela el cero: $\dfrac{0.362}{s^2+0.842s+0.362}$.
+3. Perturbación: numerador $=0.25\cdot d_c=0.25\,T_is$, dividido por $2.5T_i$:
+   $$\frac{X_3}{X_2}=\frac{0.1\,s}{s^2+0.842s+0.362}$$
+   Tiene los **mismos polos** que ante la referencia (el prefiltro no afecta este camino).
+
+**Lectura:** en ambos diseños la $s$ del numerador de $X_3/X_2$ viene del integrador del PI, así que $X_3/X_2(0)=0$ y la perturbación escalón no deja error. La diferencia está en los polos: A tiene el polo lento $\tau=2.5$ ante la perturbación; B tiene los polos de diseño ($\zeta\omega_n=0.42$, $t_s\approx9.5$ min).
 
 ## Conclusiones
 

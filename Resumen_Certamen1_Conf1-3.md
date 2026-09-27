@@ -58,6 +58,7 @@ Garantizar ciertos índices de desempeño en la respuesta de la planta **ante ca
 Con $H = 1$:
 
 $$G_x(s)=\frac{Y}{X}=\frac{CG}{1+CG},\qquad E = X - Y = \frac{1}{1+CG}\,X$$
+(Cómo se obtienen estas FT: ver la sección 2.6.)
 
 $$e_{ss}=\lim_{s\to 0} sE(s)=\lim_{s\to 0}\frac{sX(s)}{1+C(s)G(s)}$$
 
@@ -88,6 +89,59 @@ Resumen de la diapositiva 43 (ref = 0, perturbación escalón):
 | tipo 0 | tipo 0 | constante ≠ 0 |
 | tipo 0 | tipo 1 | constante ≠ 0 |
 | tipo 1 | tipo 0 | **0** |
+
+### 2.6 Cómo se escriben las FT "ante la referencia" y "ante la perturbación"
+*(Receta que se usa en todos los ejemplos de las secciones 8–11 y en los CP.)*
+
+**Diagrama base** (perturbación $D$ a la entrada de la planta):
+```
+          E        U               D
+ R ──►(+)──► Gc ──►(+)──► Gp ──┬──► Y
+       ▲-                        │
+       └─────────────────────────┘
+```
+**Paso 1: escribir una ecuación por bloque.**
+$$E=R-Y,\qquad U=G_cE,\qquad Y=G_p\,(U+D)$$
+**Paso 2: reemplazar y despejar $Y$.**
+$$Y=G_pG_c(R-Y)+G_pD\ \Rightarrow\ Y\,(1+G_cG_p)=G_cG_p\,R+G_p\,D$$
+$$\boxed{\;Y=\underbrace{\frac{G_cG_p}{1+G_cG_p}}_{Y/R\ \text{(con }D=0)}R\;+\;\underbrace{\frac{G_p}{1+G_cG_p}}_{Y/D\ \text{(con }R=0)}D\;}$$
+Por superposición se estudia cada entrada con la otra en cero.
+
+**Regla rápida (sin despejar):**
+$$\frac{Y}{\text{entrada}}=\frac{\text{camino directo desde esa entrada hasta }Y}{1+\text{ganancia del lazo}}$$
+- Desde $R$ el camino directo es $G_cG_p$. Desde $D$ es solo $G_p$, porque $D$ entra **después** del controlador.
+- El **denominador $1+G_cG_p$ es el mismo** para todas las entradas. Por eso ambas respuestas tienen la **misma ecuación característica**, salvo que haya cancelaciones (ver abajo).
+
+| Situación | FT |
+|---|---|
+| Referencia → salida | $\dfrac{G_cG_p}{1+G_cG_pH}$ |
+| Perturbación a la entrada de la planta | $\dfrac{G_p}{1+G_cG_pH}$ |
+| Perturbación con su propia FT $G_d$ (sumada a la salida) | $\dfrac{G_d}{1+G_cG_pH}$ |
+| Perturbación directo a la salida | $\dfrac{1}{1+G_cG_pH}$ |
+| Acción de control ante la referencia | $\dfrac{U}{R}=\dfrac{G_c}{1+G_cG_pH}$ |
+| Error ante la referencia | $\dfrac{E}{R}=\dfrac{1}{1+G_cG_pH}$ |
+| Con prefiltro $P$ en la referencia | se multiplica la FT de referencia por $P$ (queda fuera del lazo, no cambia el denominador) |
+
+($H$ = sensor; con $H=1$ se obtienen las de arriba.)
+
+**Cómo simplificar a mano:** escribir $G_c=\dfrac{n_c}{d_c}$ y $G_p=\dfrac{n_p}{d_p}$ y multiplicar arriba y abajo por $d_cd_p$:
+$$\frac{Y}{R}=\frac{n_cn_p}{d_cd_p+n_cn_p},\qquad \frac{Y}{D}=\frac{n_p\,d_c}{d_cd_p+n_cn_p}$$
+El polinomio $d_cd_p+n_cn_p$ es la **ecuación característica**. Fíjate que **$d_c$ pasa al numerador de $Y/D$**: si el controlador tiene integrador ($d_c$ contiene $s$), $Y/D$ tiene una $s$ arriba, así que $Y/D(0)=0$ y la perturbación escalón no deja error.
+
+**Atención con las cancelaciones:** si el cero del controlador cancela un polo de la planta, esa cancelación ocurre en $G_cG_p$ (y por tanto en $Y/R$). Pero en $Y/D$ el numerador es $G_p$ **sin** el controlador, así que el polo de la planta **reaparece**. Por eso la respuesta a la perturbación es más lenta con cualquier diseño por cancelación (PI por cancelación, MO, MS).
+
+**Cómo leer el resultado:**
+- **Polos (denominador):** rapidez y oscilación. Se comparan con $s^2+2\zeta\omega_ns+\omega_n^2$ para sacar $\zeta$ y $\omega_n$.
+- **Ganancia estática** ($s=0$): $Y/R(0)=1$ significa que sigue la referencia sin error; $Y/D(0)=0$ significa que rechaza la perturbación escalón.
+- **Ceros (numerador):** un cero lento aumenta el sobrepaso (se compensa con prefiltro).
+
+En MATLAB:
+```matlab
+Tr = feedback(Gc*Gp, 1);        % Y/R
+Td = feedback(Gp, Gc);          % Y/D  = Gp/(1+Gp*Gc)
+Td = Gd*feedback(1, Gc*Gp);     % Y/D con camino propio Gd
+Tu = feedback(Gc, Gp);          % U/R
+```
 
 ---
 
@@ -269,13 +323,35 @@ $$G_{LC}(s)=\frac{K_pK}{Ts+K_pK}=\frac{1}{\frac{T}{K_pK}s+1}\quad\Rightarrow\qua
 $$\frac{Y}{D}=\frac{\frac{T}{K_p}s}{(Ts+1)\left(\frac{T}{K_pK}s+1\right)}$$
 - ❌ Es sensible a la incertidumbre en $T$ (una cancelación imperfecta deja un par polo-cero cercano, con una "cola" lenta).
 
-**Ejemplo 1:** $G_p=1/(s+1)$, se quiere $t_{ss}=2$ (en lazo abierto es $4T=4$). Entonces $T_{LC}=2/4=0.5$, $K_p=1/(0.5\cdot1)=2$, $T_i=1$. Ante la referencia: $1/(0.5s+1)$. Ante la perturbación: $\dfrac{0.5s}{(0.5s+1)(s+1)}$ (más lento).
+**De dónde salen estas FT** (receta de la sección 2.6). Con $T_i=T$:
+$$G_cG_p=K_p\frac{Ts+1}{Ts}\cdot\frac{K}{Ts+1}=\frac{K_pK}{Ts}\quad(\text{el }(Ts+1)\text{ se cancela})$$
+- Referencia: $\dfrac{Y}{R}=\dfrac{G_cG_p}{1+G_cG_p}=\dfrac{K_pK/(Ts)}{1+K_pK/(Ts)}=\dfrac{K_pK}{Ts+K_pK}$ (multiplicando arriba y abajo por $Ts$).
+- Perturbación: $\dfrac{Y}{D}=\dfrac{G_p}{1+G_cG_p}=\dfrac{K}{Ts+1}\cdot\dfrac{Ts}{Ts+K_pK}=\dfrac{KTs}{(Ts+1)(Ts+K_pK)}$. Dividiendo el segundo factor por $K_pK$ se llega a la forma de arriba. El factor $(Ts+1)$ es el polo de la planta, que **no** se canceló porque en este camino no pasa por el controlador.
+
+**Ejemplo 1:** $G_p=1/(s+1)$, se quiere $t_{ss}=2$ (en lazo abierto es $4T=4$). Entonces $T_{LC}=2/4=0.5$, $K_p=1/(0.5\cdot1)=2$, $T_i=1$.
+1. Controlador: $G_c=2\dfrac{s+1}{s}$. Lazo: $G_cG_p=2\dfrac{s+1}{s}\cdot\dfrac{1}{s+1}=\dfrac{2}{s}$.
+2. Ante la referencia: $\dfrac{Y}{R}=\dfrac{2/s}{1+2/s}=\dfrac{2}{s+2}=\dfrac{1}{0.5s+1}$. Un solo polo en $s=-2$: $t_{ss}=4\cdot0.5=2$ ✔.
+3. Ante la perturbación: $\dfrac{Y}{D}=\dfrac{1}{s+1}\cdot\dfrac{1}{1+2/s}=\dfrac{1}{s+1}\cdot\dfrac{s}{s+2}=\dfrac{s}{(s+1)(s+2)}=\dfrac{0.5s}{(0.5s+1)(s+1)}$.
+4. Lectura: ante la perturbación reaparece el polo lento $s=-1$ (constante de tiempo 1, $t_{ss}\approx4$), el doble de lento que ante la referencia. La $s$ del numerador (del integrador del PI) hace que $Y/D(0)=0$: la perturbación escalón se corrige por completo.
 
 ### 8.2 PI con prefiltro (se impone un 2º orden deseado)
 No se cancela nada: se eligen $K_p$ y $T_i$ para que el lazo cerrado tenga los $\zeta$ y $\omega_n$ deseados:
 $$G_{LC}=\frac{\omega_n^2(T_is+1)}{s^2+2\zeta\omega_n s+\omega_n^2},\qquad 2\zeta\omega_n=\frac{1+K_pK}{T},\quad \omega_n^2=\frac{K_pK}{T_iT}$$
 
+**De dónde sale:** sin cancelar,
+$$G_cG_p=K_p\frac{T_is+1}{T_is}\cdot\frac{K}{Ts+1}=\frac{K_pK(T_is+1)}{T_is(Ts+1)}$$
+Ecuación característica ($d_cd_p+n_cn_p=0$, sección 2.6):
+$$T_is(Ts+1)+K_pK(T_is+1)=T_iT\,s^2+T_i(1+K_pK)\,s+K_pK=0$$
+Dividiendo por $T_iT$ para dejar $s^2$ con coeficiente 1:
+$$s^2+\underbrace{\frac{1+K_pK}{T}}_{2\zeta\omega_n}s+\underbrace{\frac{K_pK}{T_iT}}_{\omega_n^2}=0$$
+Igualando coeficientes con el 2º orden deseado $s^2+2\zeta\omega_ns+\omega_n^2$ y usando $t_{ss}\approx4/(\zeta\omega_n)$ se despeja:
+
 $$\boxed{\omega_n=\frac{4}{\zeta\,t_{ss}},\qquad K_p=\frac{2\zeta\omega_nT-1}{K},\qquad T_i=\frac{K_pK}{T\omega_n^2}}$$
+
+Las FT resultantes (mismo denominador en ambas):
+$$\frac{Y}{R}=\frac{n_cn_p}{d_cd_p+n_cn_p}=\frac{\omega_n^2\,(T_is+1)}{s^2+2\zeta\omega_ns+\omega_n^2},\qquad
+\frac{Y}{D}=\frac{n_p\,d_c}{d_cd_p+n_cn_p}=\frac{(K/T)\,s}{s^2+2\zeta\omega_ns+\omega_n^2}$$
+(En $Y/R$: $K_pK(T_is+1)/(T_iT)=\omega_n^2(T_is+1)$. En $Y/D$: $K\cdot T_is/(T_iT)=(K/T)s$.)
 
 - $\zeta=0.7 \Rightarrow M_p\approx4\%$ y $\zeta=0.4\Rightarrow M_p\approx25\%$.
 - Para que $K_p>0$ se necesita $2\zeta\omega_nT>1$, es decir, $t_{ss}<8T$.
@@ -284,8 +360,12 @@ $$\boxed{\omega_n=\frac{4}{\zeta\,t_{ss}},\qquad K_p=\frac{2\zeta\omega_nT-1}{K}
   - $t_{ss} < 5T$: **usar el prefiltro**. Ojo: a menor $t_{ss}$, mayor acción de control y riesgo de saturación.
 - ✅ Como no se basa en cancelación, la **ecuación característica es la misma** ante la referencia y ante la perturbación: responde **igual de rápido** en ambos casos y es menos sensible a la incertidumbre.
 
-**Ejemplo 2:** $G_p=1/(s+1)$, $t_{ss}=2$, $M_p=4\%$. Entonces $\zeta=0.7$, $\omega_n=4/(0.7\cdot2)=2.86$, $K_p=2\cdot0.7\cdot2.86\cdot1-1=3$, $T_i=3/2.86^2=0.36$.
-Ante la referencia: $\dfrac{8.16}{s^2+4s+8.16}$ (con prefiltro). Ante la perturbación: $\dfrac{s}{s^2+4s+8.16}$ (mismos polos, igual de rápida).
+**Ejemplo 2:** $G_p=1/(s+1)$, $t_{ss}=2$, $M_p=4\%$. Entonces $\zeta=0.7$, $\omega_n=4/(0.7\cdot2)=2.86$, $K_p=2\cdot0.7\cdot2.86\cdot1-1=3$, $T_i=3/2.86^2=0.36$ (más exacto: $3/8.16=0.367$).
+1. Lazo: $G_cG_p=\dfrac{3(T_is+1)}{T_is}\cdot\dfrac{1}{s+1}$. Aquí no se cancela nada.
+2. Ecuación característica: $T_is(s+1)+3(T_is+1)=T_i\,(s^2+4s+3/T_i)=T_i\,(s^2+4s+8.16)$. Comprobación: $2\zeta\omega_n=2\cdot0.7\cdot2.86=4$ y $\omega_n^2=8.16$ ✔.
+3. Ante la referencia **sin** prefiltro: $\dfrac{Y}{R}=\dfrac{3(T_is+1)}{T_i(s^2+4s+8.16)}=\dfrac{8.16\,(0.367s+1)}{s^2+4s+8.16}$. El cero aumenta el sobrepaso.
+4. **Con** prefiltro $\dfrac{1}{T_is+1}$ (está fuera del lazo, solo multiplica): $\dfrac{Y}{R}=\dfrac{1}{T_is+1}\cdot\dfrac{8.16(T_is+1)}{s^2+4s+8.16}=\dfrac{8.16}{s^2+4s+8.16}$. Queda el 2º orden puro con $\zeta=0.7$.
+5. Ante la perturbación: $\dfrac{Y}{D}=\dfrac{1}{s+1}\cdot\dfrac{T_is(s+1)}{T_i(s^2+4s+8.16)}=\dfrac{s}{s^2+4s+8.16}$. El $(s+1)$ se simplifica solo y quedan **los mismos polos** que ante la referencia: igual de rápida. La $s$ del numerador (el integrador del PI) da $Y/D(0)=0$.
 
 ---
 
@@ -308,6 +388,13 @@ $$\boxed{G_c(s)=\frac{1}{K_r\,2T_u s\,(T_us+1)\,G_p(s)}}$$
 $$G_c=\frac{T_2s+1}{2T_1K_rK_1K_2\,s}=\frac{T_2s+1}{Ts}=P+\frac{I}{s},\quad T=2T_1K_rK_1K_2,\ P=\frac{T_2}{T},\ I=\frac1T$$
 Es un **PI cuyo cero cancela la constante de tiempo mayor**. Con $K_1=2,T_1=1,K_2=3,T_2=2,K_r=1$: $T=12$, $P=0.167$, $I=0.083$.
 Como en toda cancelación, la respuesta ante la perturbación resulta **más lenta**.
+
+**FT de lazo cerrado del Ejemplo 3** (receta de la sección 2.6, $K_r=1$):
+- Por diseño $G_cG_p=\dfrac{1}{2T_1s(T_1s+1)}$, así que ante la referencia:
+  $$\frac{Y}{R}=\frac{1}{2T_1s(T_1s+1)+1}=\frac{1}{2T_1^2s^2+2T_1s+1}\ \xrightarrow{T_1=1}\ \frac{1}{2s^2+2s+1}\quad(\zeta=0.707)$$
+- Ante la perturbación a la entrada de la planta:
+  $$\frac{Y}{D}=\frac{G_p}{1+G_cG_p}=\frac{K_1K_2}{(T_1s+1)(T_2s+1)}\cdot\frac{2T_1s(T_1s+1)}{2T_1^2s^2+2T_1s+1}=\frac{2T_1K_1K_2\,s}{(T_2s+1)(2T_1^2s^2+2T_1s+1)}$$
+  Con los números: $\dfrac{12\,s}{(2s+1)(2s^2+2s+1)}$. Reaparece el polo **lento** $(T_2s+1)$ que el PI había cancelado; la $s$ de arriba (integrador del PI) da error cero.
 
 **Regla práctica:** si la planta tiene 1 constante lenta, el MO da un **PI**; si tiene 2 constantes lentas, un **PID** (dos ceros); si la planta ya tiene integrador, un **P** (o PD).
 
@@ -336,6 +423,14 @@ Lectura del Bode:
 - **MS:** $G_c=\dfrac{0.4s+1}{0.08s^2(0.1s+1)}\cdot\dfrac{s(0.1s+1)}{10}=\dfrac{0.4s+1}{0.8s}=0.5+\dfrac{1.25}{s}$ → **PI** ($K_p=0.5$, $K_i=1.25$).
 - **MO:** $G_c=\dfrac{1}{0.2s(0.1s+1)}\cdot\dfrac{s(0.1s+1)}{10}=0.5$ → **P** ($K_p=0.5$). No tiene integrador, así que queda con error ante la perturbación. El MS sí la rechaza.
 
+**FT de lazo cerrado del Ejemplo 4** (sección 2.6; perturbación a la entrada de la planta). Se escribe $G_p=\dfrac{100}{s(s+10)}$, o sea $n_p=100$, $d_p=s(s+10)$:
+- **MS** ($G_c=\dfrac{0.5s+1.25}{s}$, $n_c=0.5s+1.25$, $d_c=s$). Ecuación característica: $d_cd_p+n_cn_p=s^2(s+10)+100(0.5s+1.25)=s^3+10s^2+50s+125$.
+  $$\frac{Y}{R}=\frac{n_cn_p}{\ldots}=\frac{50s+125}{s^3+10s^2+50s+125},\qquad \frac{Y}{D}=\frac{n_pd_c}{\ldots}=\frac{100\,s}{s^3+10s^2+50s+125}$$
+  $Y/D(0)=0$: **sin error** ante la perturbación (la $s$ de arriba es el integrador del PI). El cero $(50s+125)$ de $Y/R$ es el que da el sobrepaso grande del MS.
+- **MO** ($G_c=0.5$, $n_c=0.5$, $d_c=1$). Ecuación característica: $s(s+10)+50=s^2+10s+50$.
+  $$\frac{Y}{R}=\frac{50}{s^2+10s+50},\qquad \frac{Y}{D}=\frac{100}{s^2+10s+50}$$
+  $Y/D(0)=100/50=2\neq0$: ante una perturbación escalón unitaria la salida queda desviada en 2 (error $=-2=-1/K_p$), porque el integrador está en la planta y no en el controlador (sección 2.5).
+
 ---
 
 ## 11. Conf. 3 — Control en cascada
@@ -359,6 +454,27 @@ Lectura del Bode:
 - **Resultado:** dos PI (más fáciles de implementar) en vez de un PID, y las **perturbaciones internas las corrige el lazo interno** casi sin que el externo tenga que intervenir.
 
 **Condición práctica:** el lazo interno debe ser **bastante más rápido** que el externo.
+
+**FT de la cascada ante la referencia y la perturbación** (misma receta de la sección 2.6, pero con dos lazos). Se llama $G_a$ a la parte de la planta dentro del lazo interno (hasta la variable intermedia $V$), $G_b$ al resto, $G_{c1}$ al regulador interno y $G_{c2}$ al externo:
+```
+ R ─►(+)─► Gc2 ─►(+)─► Gc1 ─►(+)─► Ga ─┬─ V ─► Gb ─┬─► Y
+      ▲-          ▲-              ▲ D    │            │
+      │           └──────────────────────┘            │
+      └───────────────────────────────────────────────┘
+```
+1. Ecuaciones: $U=G_{c1}\big(G_{c2}(R-Y)-V\big)$, $\;V=G_a(U+D)$, $\;Y=G_bV$.
+2. Reemplazando $U$ y $Y=G_bV$ en la ecuación de $V$:
+   $$V\,\big[1+G_aG_{c1}+G_aG_{c1}G_{c2}G_b\big]=G_aG_{c1}G_{c2}\,R+G_a\,D$$
+3. Multiplicando por $G_b$:
+   $$\frac{Y}{R}=\frac{G_{c2}G_{c1}G_aG_b}{1+G_aG_{c1}+G_aG_{c1}G_{c2}G_b},\qquad
+   \frac{Y}{D}=\frac{G_aG_b}{1+G_aG_{c1}\,(1+G_{c2}G_b)}$$
+4. Forma equivalente de $Y/R$: se reemplaza el lazo interno por su lazo cerrado $G_{LC1}=\dfrac{G_{c1}G_a}{1+G_{c1}G_a}$ y queda un lazo simple $\dfrac{G_{c2}G_{LC1}G_b}{1+G_{c2}G_{LC1}G_b}$. Esto es lo que se usa para diseñar el externo.
+
+**Por qué rechaza mejor la perturbación interna:** con un solo lazo, $\dfrac{Y}{D}=\dfrac{G_aG_b}{1+G_cG_aG_b}$. En la cascada el denominador tiene además el término $G_aG_{c1}$, que **no pasa por $G_b$** (la parte lenta). El lazo interno ve la perturbación antes de que llegue a la salida y la corrige con su propia rapidez. En el Ejemplo 5 (con $D$ a la entrada de $\frac{1}{0.1s+1}$) el pico de la salida ante un escalón unitario baja de ≈ 0.093 (PID único, en $t\approx2.8$ s) a ≈ 0.034 (cascada, en $t\approx0.8$ s).
+
+Si la perturbación entra **entre** $G_a$ y $G_b$ (fuera del lazo interno), el mismo procedimiento da $\dfrac{Y}{D_2}=\dfrac{G_b\,(1+G_aG_{c1})}{1+G_aG_{c1}(1+G_{c2}G_b)}$: ahí el lazo interno ya no ayuda y solo la corrige el externo.
+
+En MATLAB: `Td = Gb*feedback(Ga, Gc1*(1 + Gc2*Gb));` y `Tr = feedback(Gc2*feedback(Gc1*Ga,1)*Gb, 1);`
 
 **Conclusiones de la Conf. 3:**
 - PI por cancelación: sencillo, pero lento ante perturbaciones y sensible a la incertidumbre de los parámetros.
@@ -419,6 +535,8 @@ Lectura del Bode:
 
 | Concepto | Fórmula |
 |---|---|
+| FT de lazo cerrado | $\dfrac{Y}{R}=\dfrac{G_cG_p}{1+G_cG_p}=\dfrac{n_cn_p}{d_cd_p+n_cn_p}$ · $\dfrac{Y}{D}=\dfrac{G_p}{1+G_cG_p}=\dfrac{n_pd_c}{d_cd_p+n_cn_p}$ · $\dfrac{U}{R}=\dfrac{G_c}{1+G_cG_p}$ |
+| Cascada ($D$ en el lazo interno) | $\dfrac{Y}{D}=\dfrac{G_aG_b}{1+G_aG_{c1}(1+G_{c2}G_b)}$ |
 | Error, referencia | $e_{ss}=\lim_{s\to0}\dfrac{sX}{1+CG}$ |
 | Error, perturbación | $e_{ss}=-\lim_{s\to0}\dfrac{sG\,D}{1+CG}$ |
 | PID ideal | $K_c(1+\frac{1}{T_is}+T_ds)$ |

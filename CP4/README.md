@@ -97,6 +97,28 @@ $$\boxed{P=1.2264\qquad I=0.2687\qquad D=0.8956}$$
 | a) PID ZN lazo único | 0 | 51.7 % | 25.2 s | **3.73** | 34.7 s | 0 |
 | b) Cascada PI(MO) + PID(ZN) | 0 | 53.4 % | **21.2 s** | **1.33** | **26.7 s** | 0 |
 
+### FT de lazo cerrado (cómo se escriben)
+
+Misma receta de siempre (Resumen, sección 2.6): una ecuación por bloque, reemplazar y despejar. Aquí `dist` ($D$) se suma **entre $G_v$ y $G_1$**, y $e^{-s}$ es el retardo.
+
+**a) Lazo único** ($U=G_c(R-Y)$, $Y=G_2e^{-s}G_1(G_vU+D)$):
+$$Y\,(1+G_cG_vG_1G_2e^{-s})=G_cG_vG_1G_2e^{-s}\,R+G_1G_2e^{-s}\,D$$
+$$\frac{Y}{R}=\frac{G_cG_vG_1G_2e^{-s}}{1+G_cG_vG_1G_2e^{-s}},\qquad \frac{Y}{D}=\frac{G_1G_2e^{-s}}{1+G_cG_vG_1G_2e^{-s}}$$
+(Camino directo desde $D$: $G_1G_2e^{-s}$; no pasa por $G_c$ ni por $G_v$.)
+
+**b) Cascada** ($U=G_{c1}\big(G_{c2}(R-Y)-M_1\big)$, $M_1=G_1(G_vU+D)$, $Y=G_2e^{-s}M_1$). Reemplazando $U$ y $Y$ en la ecuación de $M_1$:
+$$M_1\,\big[1+G_vG_1G_{c1}\,(1+G_{c2}G_2e^{-s})\big]=G_vG_1G_{c1}G_{c2}\,R+G_1\,D$$
+$$\frac{Y}{R}=\frac{G_{c2}\,G_{LC1}\,G_2e^{-s}}{1+G_{c2}\,G_{LC1}\,G_2e^{-s}},\quad G_{LC1}=\frac{G_{c1}G_vG_1}{1+G_{c1}G_vG_1}=\frac{2}{s^2+2s+2},\qquad
+\frac{Y}{D}=\frac{G_1G_2e^{-s}}{1+G_vG_1G_{c1}\,(1+G_{c2}G_2e^{-s})}$$
+
+**Lectura:** en la cascada, el denominador de $Y/D$ tiene el término $G_vG_1G_{c1}$ **sin retardo y sin $G_2$**: el lazo interno reacciona a `dist` apenas aparece en med1, sin esperar a que atraviese $G_2$ (5 s) y el retardo (1 s). Por eso el pico baja de 3.73 a 1.33. En $s=0$, ambos $Y/D$ valen 0 porque los controladores tienen integrador.
+
+MATLAB (con `s = tf('s')`, `exp(-s)` es el retardo y `feedback` lo maneja sin problemas):
+```matlab
+Td_unico   = feedback(G1*G2*exp(-s), Gc*Gv);                    % Y/D lazo único
+Td_cascada = G2*exp(-s)*feedback(G1, Gv*Gc1*(1 + Gc2*G2*exp(-s)));
+```
+
 **Comentarios:**
 - **Error en estado estable:** es cero en ambos casos, ante la referencia y ante la perturbación, porque ambos lazos tienen integrador en el controlador.
 - **Sobreimpulso:** es alto en los dos (≈ 52 %), típico de ZN con ¼ de razón de decrecimiento. Es agravado por el retardo. Si se quiere menos sobrepaso, hay que desintonizar (bajar $K_c$) o usar un prefiltro.
@@ -161,6 +183,24 @@ Para comparar, las otras dos variantes de las notas:
 | MO lazo único (PD), de las notas | 0 | **4.8 %** | **2.8 s** | 2.86 | no se recupera | **−2.67** | 25 (golpe D) |
 | **b) Cascada MO + MS (2 PI)** | 0 | 54 % | 9.2 s | 2.34 | 10.3 s | **0** | **1.24** |
 | Cascada MO + MO (PI + P), de las notas | 0 | 8.2 % | 4.4 s | 2.37 | 7.0 s | **0** | **1.22** |
+
+### FT de lazo cerrado (cómo se escriben)
+
+Aquí `dist` ($D$) se suma **a la salida de $G_1$**, justo donde se mide med1. Sea $G_i=G_vG_1$.
+
+**Lazo único** ($U=G_c(R-Y)$, $M_1=G_iU+D$, $Y=G_2M_1$):
+$$\frac{Y}{R}=\frac{G_cG_iG_2}{1+G_cG_iG_2},\qquad \frac{Y}{D}=\frac{G_2}{1+G_cG_iG_2}$$
+Error final ante $D$ escalón: $Y/D(0)$. Como $G_2=4/s\to\infty$, se divide arriba y abajo por $G_2$: $\;Y/D(0)=\dfrac{1}{G_c(0)G_i(0)}$.
+- MO (PD, $G_c(0)=0.125$): $\dfrac{1}{0.125\cdot3}=\mathbf{2.67}$. Queda error (el −2.67 de la tabla es $e=r-y$).
+- MS (PID, $G_c(0)=\infty$): $0$.
+
+**Cascada** ($U=G_{c,in}\big(G_{c,ex}(R-Y)-M_1\big)$, $M_1=G_iU+D$, $Y=G_2M_1$):
+$$M_1\,\big[1+G_iG_{c,in}(1+G_{c,ex}G_2)\big]=G_iG_{c,in}G_{c,ex}\,R+D$$
+$$\frac{Y}{R}=\frac{G_{c,ex}G_{LC1}G_2}{1+G_{c,ex}G_{LC1}G_2},\quad G_{LC1}=\frac{G_{c,in}G_i}{1+G_{c,in}G_i}=\frac{4.5}{s^2+3s+4.5},\qquad
+\frac{Y}{D}=\frac{G_2}{1+G_iG_{c,in}\,(1+G_{c,ex}G_2)}$$
+En $s=0$, $G_{c,in}\to\infty$ (PI interno), así que $Y/D(0)=0$ **aunque el externo sea solo un P** (MO + MO). Es la explicación de la tabla: el integrador que importa es el del controlador cuyo lazo contiene el punto donde entra la perturbación.
+
+En `cp4.m`: `feedback(G2, Gc*Gi)` (lazo único) y `G2*feedback(1, Gi*Gcin*(1 + Gcex*G2))` (cascada).
 
 **Comentarios:**
 - **Error en estado estable ante la referencia:** es cero en todas, porque la planta ya es tipo 1.

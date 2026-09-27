@@ -29,6 +29,14 @@ $$G_2(s)=G_F H=\frac{-3.34(0.524s+1)}{(8.34s+1)(0.502s+1)}\cdot\frac{1}{0.75s+1}
 
 $$C(s)=\underbrace{\frac{G_cG_1}{1+G_cG_1}}_{\text{servo}}R(s)+\underbrace{\frac{G_2}{1+G_cG_1}}_{\text{regulación}}F(s)$$
 
+**De dónde sale** (una ecuación por bloque, reemplazar y despejar; ver Resumen, sección 2.6):
+- $M=G_c(R-C)$ (controlador), $W=G_vM$ (válvula), $T=G_sW+G_FF$ (tanque), $C=HT$ (transmisor).
+- Reemplazando de adentro hacia afuera: $C=H\big(G_sG_vG_c(R-C)+G_FF\big)=G_1G_c(R-C)+G_2F$.
+- Despejando: $C\,(1+G_cG_1)=G_cG_1R+G_2F$, que es la expresión de arriba.
+- Regla rápida: cada FT es (camino directo desde esa entrada hasta $C$) / (1 + ganancia del lazo). Desde $R$ el camino es $G_cG_vG_sH=G_cG_1$; desde $F$ es $G_FH=G_2$. El **denominador es el mismo** para las dos entradas.
+- Por eso en MATLAB: `feedback(Gc*G1,1)` para la referencia y `G2*feedback(1,Gc*G1)` para la perturbación ($=G_2/(1+G_cG_1)$).
+- Error ante $F$ escalón: $C/F(0)=\dfrac{G_2(0)}{1+G_c(0)G_1(0)}$. Con integrador en $G_c$, $G_c(0)=\infty$ y vale 0.
+
 **Observaciones previas:**
 - La ganancia de $G_1$ es positiva ($1.652\cdot1.183=1.954$): el proceso es de **acción directa**. Por eso el controlador debe ser de **acción inversa** (la configuración normal $e=r-c$ con $K_c>0$), para que la realimentación sea negativa.
 - La ganancia de $G_2$ es negativa: si entra más alimentación fría, la temperatura baja.

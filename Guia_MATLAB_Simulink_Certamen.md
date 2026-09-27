@@ -87,6 +87,8 @@ zpk(Gp)                   % ver polos/ceros; damp(Gp) muestra las constantes de 
 | Perturbación a la entrada de la planta → salida | `Td = feedback(Gp, Gc*H)` |
 | Perturbación con camino propio $G_d$ → salida | `Td = Gd*feedback(1, Gc*Gp*H)` |
 | Acción de control ante ref. | `Ur = feedback(Gc, Gp*H)` (Gc debe ser **propio**) |
+
+> `feedback(A, B)` calcula $\dfrac{A}{1+AB}$: **A** es el camino directo desde la entrada hasta la salida y **B** es lo que falta para cerrar el lazo. Por eso ante la referencia se escribe `feedback(Gc*Gp, H)` y ante la perturbación a la entrada de la planta `feedback(Gp, Gc*H)` ($=\frac{G_p}{1+G_pG_cH}$). La derivación a mano está en el Resumen, sección 2.6, y en la receta C0 de la guía de abordaje.
 | Simplificar | `minreal(G)` |
 | Respuesta a escalón / rampa / señal | `step(G)`, `[y,t]=step(G,t)`, `lsim(G,t,t)` (rampa), `lsim(G,u,t)` |
 | Métricas | `S = stepinfo(T)` → `S.Overshoot`, `S.SettlingTime` (2 %) |
