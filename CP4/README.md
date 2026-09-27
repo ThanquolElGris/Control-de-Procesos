@@ -18,7 +18,9 @@
 
 # Ejercicio 1
 
-$$\text{man}\to\underbrace{\frac{2}{s+2}}_{G_v=\frac{1}{0.5s+1}}\xrightarrow{+\,dist}\underbrace{\frac{5}{2s+1}}_{G_1}\to \text{med1}\to\underbrace{\frac{3}{5s+1}}_{G_2}\to e^{-1s}\to\text{med2}$$
+$$\text{man}\to G_v\xrightarrow{+\,dist}G_1\to\text{med1}\to G_2\to e^{-s}\to\text{med2}$$
+
+$$G_v=\frac{2}{s+2}=\frac{1}{0.5s+1},\qquad G_1=\frac{5}{2s+1},\qquad G_2=\frac{3}{5s+1}$$
 
 Constantes de tiempo: 0.5, 2 y 5 s, más un **retardo de 1 s**. Ganancia total $1\cdot5\cdot3=15$.
 
@@ -32,6 +34,7 @@ Ga = Gv*G1*G2;  Ga.InputDelay = 1;
 ```
 
 Se busca la frecuencia donde la fase, **incluido el retardo**, vale −180°:
+
 $$-\arctan(0.5\omega)-\arctan(2\omega)-\arctan(5\omega)-1\cdot\omega=-\pi\ \Rightarrow\ \omega_u=\mathbf{0.646\ rad/s}$$
 
 Ahí $|G(j\omega_u)|=\dfrac{15}{\sqrt{1+0.104}\sqrt{1+1.67}\sqrt{1+10.44}}=2.583$, de modo que:
@@ -46,9 +49,11 @@ Alternativa con el PORT (respuesta al escalón): $K=15$, $t_{28}=4.95$ y $t_{63}
 PID serie (ZN): $K'_c=K_u/1.6=\mathbf{0.2420}$, $T'_i=T_u/2=\mathbf{4.862}$, $T'_d=T_u/8=\mathbf{1.215}$.
 
 Pasado a ideal:
+
 $$K_c=0.242\left(1+\tfrac{1.215}{4.862}\right)=0.3025,\quad T_i=4.862+1.215=6.077,\quad T_d=\tfrac{4.862\cdot1.215}{6.077}=0.972$$
 
 Forma paralela:
+
 $$\boxed{P=0.3025\qquad I=\frac{K_c}{T_i}=0.0498\qquad D=K_cT_d=0.2941}$$
 
 ### a3) Respuesta
@@ -60,9 +65,11 @@ $$\boxed{P=0.3025\qquad I=\frac{K_c}{T_i}=0.0498\qquad D=K_cT_d=0.2941}$$
 1. Planta interna: $\text{med1}/\text{man}=G_vG_1=\dfrac{1}{0.5s+1}\cdot\dfrac{5}{2s+1}$, con $K=5$. La perturbación entra **dentro** de este lazo.
 2. $T_u=0.5$ (la menor constante; no se compensa). Se compensa $T=2$.
 3. Fórmula del MO con $K_r=1$:
+
 $$G_{c1}=\frac{1}{2T_us(T_us+1)G_vG_1}=\frac{(0.5s+1)(2s+1)}{2(0.5)s(0.5s+1)\cdot5}=\frac{2s+1}{5s}$$
 
 ### b2) Forma paralela
+
 $$\boxed{G_{c1}=0.4+\frac{0.2}{s}\qquad P=0.4,\ I=0.2,\ D=0\ (\textbf{PI})}$$
 
 Lazo interno cerrado: $\dfrac{1}{2T_u^2s^2+2T_us+1}=\dfrac{1}{0.5s^2+s+1}=\dfrac{2}{s^2+2s+2}$.
@@ -102,12 +109,17 @@ $$\boxed{P=1.2264\qquad I=0.2687\qquad D=0.8956}$$
 Misma receta de siempre (Resumen, sección 2.6): una ecuación por bloque, reemplazar y despejar. Aquí `dist` ($D$) se suma **entre $G_v$ y $G_1$**, y $e^{-s}$ es el retardo.
 
 **a) Lazo único** ($U=G_c(R-Y)$, $Y=G_2e^{-s}G_1(G_vU+D)$):
+
 $$Y\,(1+G_cG_vG_1G_2e^{-s})=G_cG_vG_1G_2e^{-s}\,R+G_1G_2e^{-s}\,D$$
+
 $$\frac{Y}{R}=\frac{G_cG_vG_1G_2e^{-s}}{1+G_cG_vG_1G_2e^{-s}},\qquad \frac{Y}{D}=\frac{G_1G_2e^{-s}}{1+G_cG_vG_1G_2e^{-s}}$$
+
 (Camino directo desde $D$: $G_1G_2e^{-s}$; no pasa por $G_c$ ni por $G_v$.)
 
 **b) Cascada** ($U=G_{c1}\big(G_{c2}(R-Y)-M_1\big)$, $M_1=G_1(G_vU+D)$, $Y=G_2e^{-s}M_1$). Reemplazando $U$ y $Y$ en la ecuación de $M_1$:
+
 $$M_1\,\big[1+G_vG_1G_{c1}\,(1+G_{c2}G_2e^{-s})\big]=G_vG_1G_{c1}G_{c2}\,R+G_1\,D$$
+
 $$\frac{Y}{R}=\frac{G_{c2}\,G_{LC1}\,G_2e^{-s}}{1+G_{c2}\,G_{LC1}\,G_2e^{-s}},\quad G_{LC1}=\frac{G_{c1}G_vG_1}{1+G_{c1}G_vG_1}=\frac{2}{s^2+2s+2},\qquad
 \frac{Y}{D}=\frac{G_1G_2e^{-s}}{1+G_vG_1G_{c1}\,(1+G_{c2}G_2e^{-s})}$$
 
@@ -130,16 +142,20 @@ Td_cascada = G2*exp(-s)*feedback(G1, Gv*Gc1*(1 + Gc2*G2*exp(-s)));
 
 # Ejercicio 2
 
-$$\text{man}\to\underbrace{\frac{3}{s+3}}_{G_v=\frac{1}{\frac13s+1}}\to\underbrace{\frac{3}{2s+1}}_{G_1}\xrightarrow{+\,dist}\text{med1}\to\underbrace{\frac{4}{s}}_{G_2}\to\text{med2}$$
+$$\text{man}\to G_v\to G_1\xrightarrow{+\,dist}\text{med1}\to G_2\to\text{med2}$$
+
+$$G_v=\frac{3}{s+3}=\frac{1}{\frac13s+1},\qquad G_1=\frac{3}{2s+1},\qquad G_2=\frac{4}{s}$$
 
 La planta completa es $G_p=\dfrac{12}{s(\frac13s+1)(2s+1)}$: **tipo 1**, con $T_u=1/3$ y $K=12$. Es el caso c) del ejercicio 1 del CP-3.
 
 ## a) Módulo simétrico en lazo único (med2)
 
 ### a1) Desarrollo
+
 $$G_c=\frac{4T_us+1}{8T_u^2s^2(T_us+1)G_p}=\frac{(\frac43s+1)\,s(\frac13s+1)(2s+1)}{8\cdot\frac19\,s^2(\frac13s+1)\cdot12}=\frac{(\frac43s+1)(2s+1)}{\frac{32}{3}s}$$
 
 ### a2) Forma paralela
+
 $$G_c=\frac{\frac83s^2+\frac{10}{3}s+1}{\frac{32}{3}s}=\frac{0.25s^2+0.3125s+0.09375}{s}\ \Rightarrow\ \boxed{P=0.3125,\ I=0.09375,\ D=0.25}\ (\textbf{PID})$$
 
 Coincide con las notas de la guía. Como referencia, el MO en lazo único da $G_c=\dfrac{2s+1}{8}=0.125+0.25s$ (**PD**).
@@ -151,18 +167,22 @@ Coincide con las notas de la guía. Como referencia, el MO en lazo único da $G_
 
 ### b1) Controlador interno por MO (desarrollo)
 Planta interna: $G_vG_1=\dfrac{3}{(\frac13s+1)(2s+1)}$, con $T_u=\frac13$ y $K=3$:
+
 $$G_{c,in}=\frac{(\frac13s+1)(2s+1)}{2\cdot\frac13\,s(\frac13s+1)\cdot3}=\frac{2s+1}{2s}$$
 
 ### b2) Forma paralela
+
 $$\boxed{G_{c,in}=\frac{s+0.5}{s}=1+\frac{0.5}{s}\qquad P=1,\ I=0.5\ (\textbf{PI})}$$
 
 Lazo interno cerrado: $\dfrac{1}{\frac29s^2+\frac23s+1}=\dfrac{4.5}{s^2+3s+4.5}\approx\dfrac{1}{\frac23s+1}$.
 
 ### b3) Controlador externo por MS (desarrollo)
 La planta externa, aproximando el lazo interno, es $\dfrac{1}{\frac23s+1}\cdot\dfrac4s$, con $T_u=\frac23$ y $K=4$:
+
 $$G_{c,ex}=\frac{(4\cdot\frac23s+1)\,s(\frac23s+1)}{8\cdot\frac49\,s^2(\frac23s+1)\cdot4}=\frac{\frac83s+1}{\frac{128}{9}s}$$
 
 ### b4) Forma paralela
+
 $$\boxed{G_{c,ex}=\frac{0.1875s+0.07031}{s}=0.1875+\frac{0.07031}{s}\qquad P=0.1875,\ I=0.07031\ (\textbf{PI})}$$
 
 > **Ojo con las notas de la guía:** allí aparece "Gcexmo" igual a "Gcexms", pero es un error de tipeo. Por MO, el externo es $\dfrac{1}{2T_us(T_us+1)}\cdot\dfrac{s(T_us+1)}{4}=\dfrac{1}{8T_u}=\mathbf{0.1875}$, **un P** (la planta externa ya tiene integrador).
@@ -189,15 +209,20 @@ Para comparar, las otras dos variantes de las notas:
 Aquí `dist` ($D$) se suma **a la salida de $G_1$**, justo donde se mide med1. Sea $G_i=G_vG_1$.
 
 **Lazo único** ($U=G_c(R-Y)$, $M_1=G_iU+D$, $Y=G_2M_1$):
+
 $$\frac{Y}{R}=\frac{G_cG_iG_2}{1+G_cG_iG_2},\qquad \frac{Y}{D}=\frac{G_2}{1+G_cG_iG_2}$$
+
 Error final ante $D$ escalón: $Y/D(0)$. Como $G_2=4/s\to\infty$, se divide arriba y abajo por $G_2$: $\;Y/D(0)=\dfrac{1}{G_c(0)G_i(0)}$.
 - MO (PD, $G_c(0)=0.125$): $\dfrac{1}{0.125\cdot3}=\mathbf{2.67}$. Queda error (el −2.67 de la tabla es $e=r-y$).
 - MS (PID, $G_c(0)=\infty$): $0$.
 
 **Cascada** ($U=G_{c,in}\big(G_{c,ex}(R-Y)-M_1\big)$, $M_1=G_iU+D$, $Y=G_2M_1$):
+
 $$M_1\,\big[1+G_iG_{c,in}(1+G_{c,ex}G_2)\big]=G_iG_{c,in}G_{c,ex}\,R+D$$
+
 $$\frac{Y}{R}=\frac{G_{c,ex}G_{LC1}G_2}{1+G_{c,ex}G_{LC1}G_2},\quad G_{LC1}=\frac{G_{c,in}G_i}{1+G_{c,in}G_i}=\frac{4.5}{s^2+3s+4.5},\qquad
 \frac{Y}{D}=\frac{G_2}{1+G_iG_{c,in}\,(1+G_{c,ex}G_2)}$$
+
 En $s=0$, $G_{c,in}\to\infty$ (PI interno), así que $Y/D(0)=0$ **aunque el externo sea solo un P** (MO + MO). Es la explicación de la tabla: el integrador que importa es el del controlador cuyo lazo contiene el punto donde entra la perturbación.
 
 En `cp4.m`: `feedback(G2, Gc*Gi)` (lazo único) y `G2*feedback(1, Gi*Gcin*(1 + Gcex*G2))` (cascada).

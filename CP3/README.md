@@ -32,7 +32,7 @@ Procedimiento en cada caso: se sustituye $G_p$ en la fórmula, se cancela lo que
 
 ### Planta b) $\;G_p=\dfrac{K_1K_2}{(T_1s+1)(T_2s+1)}$ (tipo 0)
 - **MO:** $G_c=\dfrac{T_2s+1}{2T_1Ks}$ → **PI**, con $K_p=\dfrac{T_2}{2T_1K}$ y $K_i=\dfrac{1}{2T_1K}$.
-- **MS:** $G_c=\dfrac{(4T_1s+1)(T_2s+1)}{8T_1^2Ks^2}=\underbrace{\dfrac{T_2}{2T_1K}}_{K_p}+\underbrace{\dfrac{4T_1+T_2}{8T_1^2K}}_{K_i}\dfrac1s+\underbrace{\dfrac{1}{8T_1^2K}}_{K_{ii}}\dfrac{1}{s^2}$
+- **MS:** $G_c=\dfrac{(4T_1s+1)(T_2s+1)}{8T_1^2Ks^2}=K_p+\dfrac{K_i}{s}+\dfrac{K_{ii}}{s^2}$, con $K_p=\dfrac{T_2}{2T_1K}$, $K_i=\dfrac{4T_1+T_2}{8T_1^2K}$ y $K_{ii}=\dfrac{1}{8T_1^2K}$
   → **PI con doble integrador** (PI·I). No entra en la forma $K_p+K_i/s+K_ds$. Por eso la guía dice que el MS en plantas tipo 0 conviene reemplazarlo por mando subordinado.
 
 ### Planta c) $\;G_p=\dfrac{K_1K_2K_3}{s(T_1s+1)(T_2s+1)}$ (tipo 1)
@@ -92,25 +92,35 @@ Márgenes de fase: MO = 65.5° y MS = 36.9° en ambas plantas (confirma la teor�
 ### FT de lazo cerrado (de dónde salen los valores de la tabla)
 
 Receta (Resumen, sección 2.6), con la perturbación $D$ a la entrada de la planta:
+
 $$Y=G_pG_c(R-Y)+G_pD\ \Rightarrow\ \frac{Y}{R}=\frac{G_cG_p}{1+G_cG_p}=\frac{n_cn_p}{d_cd_p+n_cn_p},\qquad \frac{Y}{D}=\frac{G_p}{1+G_cG_p}=\frac{n_p\,d_c}{d_cd_p+n_cn_p}$$
+
 donde $G_c=n_c/d_c$ y $G_p=n_p/d_p$.
 
 **$G_{p1}=\dfrac{100}{s(s+10)}$** ($n_p=100$, $d_p=s(s+10)$):
 - **MO** ($G_c=0.5$: $n_c=0.5$, $d_c=1$). Ecuación característica $s(s+10)+50=s^2+10s+50$.
+
   $$\frac{Y}{R}=\frac{50}{s^2+10s+50},\qquad \frac{Y}{D}=\frac{100}{s^2+10s+50}$$
+
   $\omega_n=\sqrt{50}=7.07$, $2\zeta\omega_n=10$ → $\zeta=0.707$ ✔ (4.3 %). $Y/D(0)=100/50=\mathbf{2}$: error ante la perturbación.
 - **MS** ($G_c=\frac{0.5s+1.25}{s}$: $n_c=0.5s+1.25$, $d_c=s$). Ecuación característica $s^2(s+10)+100(0.5s+1.25)=s^3+10s^2+50s+125$.
+
   $$\frac{Y}{R}=\frac{50s+125}{s^3+10s^2+50s+125},\qquad \frac{Y}{D}=\frac{100\,s}{s^3+10s^2+50s+125}$$
+
   $Y/D(0)=0$ (la $s$ de arriba viene del $d_c=s$, el integrador del PI). El cero $50s+125$ de $Y/R$ explica el 43 % de sobrepaso.
 
 **$G_{p2}=\dfrac{2}{s(0.8s+1)(s+0.5)}$**:
 - **MO** (PD $\frac{2s+1}{6.4}$): el cero $(2s+1)$ cancela el polo $(s+0.5)$ en $G_cG_p=\dfrac{1}{1.6s(0.8s+1)}$.
+
   $$\frac{Y}{R}=\frac{1}{1.28s^2+1.6s+1}=\frac{0.781}{s^2+1.25s+0.781},\qquad
   \frac{Y}{D}=\frac{2.5}{(s+0.5)(s^2+1.25s+0.781)}$$
+
   En $Y/D$ **reaparece el polo cancelado** $s=-0.5$ (constante de tiempo 2), y $Y/D(0)=2.5/0.391=\mathbf{6.4}$ (error, no hay integrador en $G_c$).
 - **MS** (PID):
+
   $$\frac{Y}{R}=\frac{0.781s+0.244}{s^3+1.25s^2+0.781s+0.244},\qquad
   \frac{Y}{D}=\frac{2.5\,s}{(s+0.5)(s^3+1.25s^2+0.781s+0.244)}$$
+
   También reaparece $s=-0.5$, pero $Y/D(0)=0$.
 
 **Lectura:** el denominador de $Y/R$ es el 2º orden (MO) o 3er orden (MS) de diseño; el de $Y/D$ es ese **mismo** polinomio multiplicado por los polos que el controlador canceló. Por eso el rechazo de perturbaciones siempre es más lento que el seguimiento cuando hay cancelación.
@@ -132,14 +142,19 @@ MATLAB: `feedback(Gc*Gp,1)` y `feedback(Gp,Gc)`, y con `minreal` se ven las canc
 
 ### a) Un controlador con 4 % de sobreimpulso y error cero ante escalón → **módulo óptimo**
 $T_u=0.01$. Se compensan las dos constantes de 0.1:
+
 $$G_c=\frac{(0.1s+1)^2}{2(0.01)s}=\frac{0.01s^2+0.2s+1}{0.02s}=\mathbf{10+\frac{50}{s}+0.5\,s}\ \to\ \textbf{PID}$$
+
 En forma ideal: $k_c=10$, $t_i=0.2$, $t_d=0.05$.
 
 ### b) Mando subordinado (cascada), con un sensor en $V$
 - **Lazo interno** ($U\to V$): planta $\dfrac{1}{(0.01s+1)(0.1s+1)}$, $T_u=0.01$, MO:
+
   $$G_{c1}=\frac{0.1s+1}{0.02s}=\mathbf{5+\frac{50}{s}}\ (\textbf{PI})$$
+
   Lazo cerrado interno: $\dfrac{1}{0.0002s^2+0.02s+1}\approx\dfrac{1}{0.02s+1}$.
 - **Lazo externo** ($V_{ref}\to Y$): planta $\dfrac{1}{(0.02s+1)(0.1s+1)}$, $T_u=0.02$, MO:
+
   $$G_{c2}=\frac{0.1s+1}{0.04s}=\mathbf{2.5+\frac{25}{s}}\ (\textbf{PI})$$
 
 Resultado: **dos PI** en lugar de un PID.
@@ -175,12 +190,18 @@ Condiciones de la simulación:
 
 **FT ante la perturbación en el mando (de dónde sale la diferencia).** Se llama $G_a=\frac{1}{(0.01s+1)(0.1s+1)}$ (hasta $V$) y $G_b=\frac{1}{0.1s+1}$ (de $V$ a $Y$). La perturbación $D$ se suma al mando, a la entrada de $G_a$.
 - **PID único:** ecuaciones $U=G_{c}(R-Y)$, $Y=G_aG_b(U+D)$. Con $R=0$:
+
   $$\frac{Y}{D}=\frac{G_aG_b}{1+G_cG_aG_b}$$
+
   Como $G_cG_aG_b=\dfrac{1}{0.02s(0.01s+1)}$ (el PID canceló los dos polos de 0.1 s):
+
   $$\frac{Y}{D}=\frac{1}{(0.01s+1)(0.1s+1)^2}\cdot\frac{0.02s(0.01s+1)}{0.0002s^2+0.02s+1}=\frac{0.02\,s}{(0.1s+1)^2\,(0.0002s^2+0.02s+1)}$$
+
   **Reaparecen los dos polos lentos de 0.1 s** que se habían cancelado: por eso la recuperación tarda ≈ 0.38 s.
 - **Cascada:** ecuaciones $U=G_{c1}\big(G_{c2}(R-Y)-V\big)$, $V=G_a(U+D)$, $Y=G_bV$. Con $R=0$, reemplazando $U$ en $V$:
+
   $$V\,\big[1+G_aG_{c1}(1+G_{c2}G_b)\big]=G_a\,D\ \Rightarrow\ \frac{Y}{D}=\frac{G_aG_b}{1+G_aG_{c1}\,(1+G_{c2}G_b)}$$
+
   Comparado con el PID único, el denominador tiene el término $G_aG_{c1}$ que **no pasa por $G_b$**: el lazo interno ($G_aG_{c1}=\frac{1}{0.02s(0.01s+1)}$, rápido) corrige la perturbación antes de que atraviese el polo de $G_b$. En $s=0$, $G_{c1}\to\infty$ (integrador del PI interno), así que $Y/D(0)=0$.
 - MATLAB: `feedback(G3, Gpid)` y `Gc_*feedback(Ga*Gb, Gc1*(1 + Gc2*Gc_))` (así está en `cp3.m`, con `Gc_` = $G_b$ y `Ga*Gb` = $G_a$).
 
@@ -194,21 +215,29 @@ Planta: $\;Gc_1\to\dfrac{1}{0.1s+1}\to\dfrac{1}{0.01s+1}\to V\,(\text{lazo inter
 
 ### Síntesis
 - **$G_{c1}$ (MO)**, sobre $\dfrac{1}{(0.1s+1)(0.01s+1)}$ con $T_u=0.01$:
+
   $$G_{c1}=\frac{0.1s+1}{0.02s}=\mathbf{5+\frac{50}{s}}\ (\textbf{PI})$$
+
   Con $K_b=I/P=10$ y lazo interno cerrado $\approx\dfrac{1}{0.02s+1}$.
 - **Planta del lazo externo:** $\dfrac{1}{s(0.02s+1)(2s+1)}$, con $T_u=0.02$ y compensando $T=2$. Es el caso c) del ejercicio 1, con $K=1$.
   - **$G_{c2}$ por MO:**
+
     $$G_{c2}=\frac{2s+1}{2(0.02)}=25(2s+1)=\mathbf{25+50\,s}\ (\textbf{PD})$$
+
   - **$G_{c2}$ por MS:**
+
     $$G_{c2}=\frac{(0.08s+1)(2s+1)}{8(0.02)^2s}=\frac{0.16s^2+2.08s+1}{0.0032s}=\mathbf{650+\frac{312.5}{s}+50\,s}\ (\textbf{PID})$$
+
     Aquí $K_b=I/P=0.48$.
 - Filtro: N = 1000 (con la fórmula de la guía, N = 5 para el PD, y el sobrepaso lineal sube a 73 %).
 
 ### FT de lazo cerrado de la cascada
 
 Con $G_a=\frac{1}{(0.1s+1)(0.01s+1)}$ (lazo interno, hasta $V$) y $G_b=\frac{1}{s(2s+1)}$, y la perturbación $D$ sumada al mando (entrada de $G_a$), las mismas ecuaciones del ejercicio 3 dan:
+
 $$\frac{C}{R}=\frac{G_{c2}G_{LC1}G_b}{1+G_{c2}G_{LC1}G_b},\quad G_{LC1}=\frac{G_{c1}G_a}{1+G_{c1}G_a},\qquad
 \frac{C}{D}=\frac{G_aG_b}{1+G_aG_{c1}\,(1+G_{c2}G_b)}$$
+
 - **Error final ante la perturbación = 0 con ambos $G_{c2}$**, porque en $s=0$ el integrador del PI interno hace $G_{c1}\to\infty$.
 - La diferencia está en el transitorio. Con **MO afuera (PD)** el cero $(2s+1)$ de $G_{c2}$ canceló el polo de $G_b$ en $G_{c2}G_b$, pero en el numerador $G_aG_b$ ese polo $(2s+1)$ **sigue estando**: la recuperación es lenta, con $\tau\approx2$ s. Con **MS afuera (PID)**, el integrador extra de $G_{c2}$ da ganancia de lazo mucho mayor a baja frecuencia y la desviación se elimina en ≈ 0.3 s.
 

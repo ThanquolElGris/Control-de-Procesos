@@ -80,7 +80,9 @@ Antes de calcular, siempre estos 6 pasos. Anotarlos en la hoja también da punto
 2. Escribir **una ecuación por bloque**: $E=R-Y$, $U=G_cE$, $Y=G_p(U+D)$ (o $Y=G_pU+G_dD$ si la perturbación tiene su propio camino).
 3. Reemplazar hasta que solo quede $Y$ y despejar: $Y(1+G_cG_p)=G_cG_pR+G_pD$.
 4. Leer cada FT con la otra entrada en cero:
+
 $$\frac{Y}{R}=\frac{G_cG_p}{1+G_cG_p},\qquad \frac{Y}{D}=\frac{G_p}{1+G_cG_p}\ \Big(\text{o }\frac{G_d}{1+G_cG_p}\Big),\qquad \frac{U}{R}=\frac{G_c}{1+G_cG_p}$$
+
    Atajo: **camino directo desde la entrada hasta $Y$, dividido por 1 + ganancia del lazo.**
 5. Simplificar con $G_c=n_c/d_c$, $G_p=n_p/d_p$: $\;\dfrac{Y}{R}=\dfrac{n_cn_p}{d_cd_p+n_cn_p}$, $\;\dfrac{Y}{D}=\dfrac{n_pd_c}{d_cd_p+n_cn_p}$. El denominador es la ecuación característica, **igual para ambas**.
 6. Interpretar:
@@ -88,6 +90,7 @@ $$\frac{Y}{R}=\frac{G_cG_p}{1+G_cG_p},\qquad \frac{Y}{D}=\frac{G_p}{1+G_cG_p}\ \
    - Si $d_c$ tiene $s$ (integrador en $G_c$), $Y/D$ tiene $s$ arriba → $Y/D(0)=0$, sin error ante perturbación escalón.
    - Con prefiltro $P$: solo se multiplica $Y/R$ por $P$; $Y/D$ no cambia.
 7. **Cascada** (interno $G_{c1}$ sobre $G_a$, externo $G_{c2}$ sobre $G_b$, $D$ a la entrada de $G_a$): mismas ecuaciones con $U=G_{c1}(G_{c2}(R-Y)-V)$, $V=G_a(U+D)$, $Y=G_bV$:
+
 $$\frac{Y}{D}=\frac{G_aG_b}{1+G_aG_{c1}(1+G_{c2}G_b)},\qquad \frac{Y}{R}=\frac{G_{c2}G_{LC1}G_b}{1+G_{c2}G_{LC1}G_b},\ G_{LC1}=\frac{G_{c1}G_a}{1+G_{c1}G_a}$$
 
 Ejemplos resueltos paso a paso: Resumen secciones 2.6, 8.1, 8.2, 9, 10 y 11; CP2 (diseños A y B); CP3 (ejercicios 2, 3 y 4); CP4 (ejercicios 1 y 2).
@@ -133,7 +136,9 @@ Aplicar la tabla, **decir la forma** (serie o ideal) y convertir a paralelo. Si 
 - Límite del mando: con PI por cancelación el máximo de $u$ ocurre en $t=0^+$ y vale $K_p\,\Delta r$. Además hay que chequear el valor final $\Delta r/K$.
 
 **2º orden impuesto**
+
 $$\omega_n=\frac{4}{\zeta t_{ss}},\quad K_p=\frac{2\zeta\omega_nT-1}{K},\quad T_i=\frac{K_pK}{T\omega_n^2}$$
+
 - Requiere $t_{ss}<8T$ para que $K_p>0$.
 - Si $t_{ss}<5T$ → prefiltro $\dfrac{1}{T_is+1}$.
 - ✅ Tiene los mismos polos ante la referencia y ante la perturbación.
@@ -142,7 +147,9 @@ $$\omega_n=\frac{4}{\zeta t_{ss}},\quad K_p=\frac{2\zeta\omega_nT-1}{K},\quad T_
 ### C6. Módulo óptimo y módulo simétrico
 1. Forma de constantes de tiempo. $T_u$ = **la menor**, que queda sin compensar.
 2. Sustituir en
+
 $$G_c^{MO}=\frac{1}{K_r\,2T_us(T_us+1)G_p}\qquad G_c^{MS}=\frac{4T_us+1}{K_r\,8T_u^2s^2(T_us+1)G_p}$$
+
 3. Cancelar y expandir. Cada constante lenta aporta un cero.
 
 | Planta (sin contar $T_u$) | MO da | MS da |
@@ -257,10 +264,14 @@ $G_p=\dfrac{4}{8s+1}$ (min). Se quiere $t_{ss}=10$ min (en lazo abierto es $4T=3
 
   **FT (receta C0, $Y/D=\frac{G_p}{1+G_cG_p}$):**
   - Cancelación: $G_cG_p=0.8\frac{8s+1}{8s}\cdot\frac{4}{8s+1}=\frac{3.2}{8s}$, así que $\dfrac{Y}{R}=\dfrac{3.2}{8s+3.2}=\dfrac{1}{2.5s+1}$ y
+
     $$\frac{Y}{D}=\frac{4}{8s+1}\cdot\frac{8s}{8s+3.2}=\frac{10\,s}{(8s+1)(2.5s+1)}$$
+
     El polo $(8s+1)$ de la planta sigue ahí → recuperación de ≈ $4\cdot8$ min.
   - 2º orden: ecuación característica $T_iTs^2+T_i(1+K_pK)s+K_pK$ → $s^2+0.8s+0.326$, y
+
     $$\frac{Y}{D}=\frac{(K/T)\,s}{s^2+0.8s+0.326}=\frac{0.5\,s}{s^2+0.8s+0.326}$$
+
     Mismos polos que $Y/R$ ($\zeta\omega_n=0.4$ → ≈ 10–12 min).
 
 ---
@@ -287,7 +298,9 @@ $G_p=\dfrac{2}{(0.2s+1)(3s+1)(0.05s+1)}$ con $K_r=1$. Diseñe por MO, llévelo a
 2. $$G_c=\frac{(0.2s+1)(3s+1)}{2(0.05)s\cdot2}=\frac{0.6s^2+3.2s+1}{0.2s}=\mathbf{16+\frac{5}{s}+3s}\ \to\ \textbf{PID}$$
 3. Predicción: $M_p\approx4.3\%$ y $t_s\approx8.4T_u=0.42$ s. La simulación da 4.3 % y 0.42 s ✔.
 4. Ante la perturbación responde más lento, porque vuelven los polos de 0.2 y 3 s. Con la receta C0: $G_cG_p=\dfrac{1}{0.1s(0.05s+1)}$, entonces
+
    $$\frac{Y}{R}=\frac{1}{0.005s^2+0.1s+1},\qquad \frac{Y}{D}=\frac{G_p}{1+G_cG_p}=\frac{0.2\,s}{(0.2s+1)(3s+1)(0.005s^2+0.1s+1)}$$
+
    En $Y/D$ están los polos cancelados $(0.2s+1)(3s+1)$; la $s$ de arriba (integrador del PID) da error cero.
 
 ---
@@ -305,7 +318,9 @@ $G_p=\dfrac{5}{s(0.1s+1)(s+1)}$. Diseñe por MO y por MS y compare errores ante 
 | MS | 0 | 0 | 0 | 43 % | 1.66 |
 
 **De dónde sale $y_{ss}=1$ del MO** (receta C0): $G_cG_p=\dfrac{1}{0.2s(0.1s+1)}$ (el cero $(s+1)$ canceló el polo de la planta), así que
+
 $$\frac{Y}{D}=\frac{G_p}{1+G_cG_p}=\frac{5}{s(0.1s+1)(s+1)}\cdot\frac{0.2s(0.1s+1)}{0.02s^2+0.2s+1}=\frac{1}{(s+1)(0.02s^2+0.2s+1)}\ \Rightarrow\ Y/D(0)=1$$
+
 La $s$ de la planta se simplifica con la $s$ del lazo y no queda ninguna $s$ arriba: hay error. En el MS, $d_c=0.4s$ pasa al numerador de $Y/D$ y da $Y/D(0)=0$.
 
 **Conclusión:** el MO es mejor para seguir escalones. El MS elimina los errores ante rampa y perturbación a costa del sobrepaso, que se puede reducir con un prefiltro $1/(4T_us+1)$ o derivando la medición.
@@ -319,6 +334,7 @@ Planta: $u\to\dfrac{1}{0.02s+1}\to\dfrac{4}{0.5s+1}\to m_1\to\dfrac{2}{5s+1}\to 
 
 **Solución**
 - **a)** $T_u=0.02$ y $K=8$:
+
   $$G_c=\frac{(0.5s+1)(5s+1)}{2(0.02)(8)s}=\frac{2.5s^2+5.5s+1}{0.32s}=\mathbf{17.19+\frac{3.125}{s}+7.81s}\ (\textbf{PID})$$
 - **b)** Cascada:
   - Interno, sobre $\dfrac{4}{(0.02s+1)(0.5s+1)}$ con $T_u=0.02$: $G_{c1}=\dfrac{0.5s+1}{0.16s}=\mathbf{3.125+\dfrac{6.25}{s}}$ (PI).
@@ -335,7 +351,9 @@ Planta: $u\to\dfrac{1}{0.02s+1}\to\dfrac{4}{0.5s+1}\to m_1\to\dfrac{2}{5s+1}\to 
 
   **FT ante la perturbación** (receta C0; $G_a=\frac{4}{(0.02s+1)(0.5s+1)}$ hasta $m_1$, $G_b=\frac{2}{5s+1}$):
   - Lazo único: $G_cG_aG_b=\dfrac{1}{0.04s(0.02s+1)}$, así que
+
     $$\frac{Y}{D}=\frac{G_aG_b}{1+G_cG_aG_b}=\frac{0.32\,s}{(0.5s+1)(5s+1)(0.0008s^2+0.04s+1)}$$
+
     Reaparecen los polos de 0.5 y 5 s que el PID había cancelado.
   - Cascada: $\dfrac{Y}{D}=\dfrac{G_aG_b}{1+G_aG_{c1}(1+G_{c2}G_b)}$. El término $G_aG_{c1}$ (lazo interno, rápido) no pasa por $G_b$ y ataca la perturbación antes de que llegue a la salida.
 
@@ -351,7 +369,9 @@ $u\to\dfrac{3}{(\frac13s+1)(2s+1)}\xrightarrow{+d}m_1\to\dfrac4s\to y$.
   - $$y_{ss}=\lim_{s\to0}\frac{4/s}{1+G_c(s)\,\frac{3}{(\frac13s+1)(2s+1)}\,\frac4s}=\frac{4}{G_c(0)\cdot3\cdot4}=\frac{4}{0.125\cdot12}=\mathbf{2.67}\ \Rightarrow\ \text{hay error}$$
 - **b)** La perturbación entra en $m_1$, que es la variable **medida por el lazo interno**, y el lazo interno tiene un PI. El PI interno la elimina y **no hay error**, aunque el externo sea solo P.
   - Con ecuaciones ($G_i$ = planta interna): $U=G_{c,in}(G_{c,ex}(R-Y)-M_1)$, $M_1=G_iU+d$, $Y=\frac4sM_1$. Con $R=0$:
+
     $$\frac{Y}{d}=\frac{4/s}{1+G_iG_{c,in}\left(1+G_{c,ex}\frac4s\right)}$$
+
     Para $s\to0$ el denominador crece como $G_{c,in}G_{c,ex}\frac4s\sim\frac{1}{s^2}$ (integrador del PI interno × integrador de la planta), más rápido que el numerador $\sim\frac1s$. Por eso $Y/d(0)=0$.
 - Conclusión: el error ante la perturbación depende de **si hay un integrador en un controlador cuyo lazo contiene el punto de entrada de la perturbación**.
 

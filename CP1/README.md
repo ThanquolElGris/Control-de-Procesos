@@ -27,7 +27,9 @@ $$G_1(s)=G_v G_s H=\frac{1.652}{0.2s+1}\cdot\frac{1.183}{(8.34s+1)(0.502s+1)}\cd
 
 $$G_2(s)=G_F H=\frac{-3.34(0.524s+1)}{(8.34s+1)(0.502s+1)}\cdot\frac{1}{0.75s+1}$$
 
-$$C(s)=\underbrace{\frac{G_cG_1}{1+G_cG_1}}_{\text{servo}}R(s)+\underbrace{\frac{G_2}{1+G_cG_1}}_{\text{regulación}}F(s)$$
+$$C(s)=\frac{G_cG_1}{1+G_cG_1}\,R(s)+\frac{G_2}{1+G_cG_1}\,F(s)$$
+
+El primer término es la respuesta **servo** (ante la referencia) y el segundo la **regulación** (ante la perturbación).
 
 **De dónde sale** (una ecuación por bloque, reemplazar y despejar; ver Resumen, sección 2.6):
 - $M=G_c(R-C)$ (controlador), $W=G_vM$ (válvula), $T=G_sW+G_FF$ (tanque), $C=HT$ (transmisor).
@@ -79,7 +81,9 @@ Se aplica un escalón unitario a $G_1$ en lazo abierto, con `step(G1)`:
 3. Se calculan $T$ y $L$:
 
 $$T=\tfrac32(t_{63}-t_{28})=\tfrac32(9.831-4.263)=\mathbf{8.35\ min}$$
+
 $$L=t_{63}-T=9.831-8.352=\mathbf{1.48\ min}$$
+
 $$L/T=0.177$$
 
 Entonces:
@@ -155,6 +159,7 @@ $M_p$ es el sobrepaso, $t_s$ el tiempo de asentamiento al 2 % e IAE la integral 
 Parámetros serie: $K'_c=6.516$, $T'_i=2.312$, $T'_d=0.578$.
 
 $$K_c=K'_c\Big(1+\frac{T'_d}{T'_i}\Big)=6.516\,(1+0.25)=\mathbf{8.145}$$
+
 $$T_i=T'_i+T'_d=\mathbf{2.890\ min}\qquad T_d=\frac{T'_iT'_d}{T'_i+T'_d}=\mathbf{0.462\ min}$$
 
 Forma paralela $P+\dfrac{I}{s}+Ds$:

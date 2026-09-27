@@ -58,6 +58,7 @@ Garantizar ciertos índices de desempeño en la respuesta de la planta **ante ca
 Con $H = 1$:
 
 $$G_x(s)=\frac{Y}{X}=\frac{CG}{1+CG},\qquad E = X - Y = \frac{1}{1+CG}\,X$$
+
 (Cómo se obtienen estas FT: ver la sección 2.6.)
 
 $$e_{ss}=\lim_{s\to 0} sE(s)=\lim_{s\to 0}\frac{sX(s)}{1+C(s)G(s)}$$
@@ -101,14 +102,22 @@ Resumen de la diapositiva 43 (ref = 0, perturbación escalón):
        └─────────────────────────┘
 ```
 **Paso 1: escribir una ecuación por bloque.**
+
 $$E=R-Y,\qquad U=G_cE,\qquad Y=G_p\,(U+D)$$
+
 **Paso 2: reemplazar y despejar $Y$.**
+
 $$Y=G_pG_c(R-Y)+G_pD\ \Rightarrow\ Y\,(1+G_cG_p)=G_cG_p\,R+G_p\,D$$
-$$\boxed{\;Y=\underbrace{\frac{G_cG_p}{1+G_cG_p}}_{Y/R\ \text{(con }D=0)}R\;+\;\underbrace{\frac{G_p}{1+G_cG_p}}_{Y/D\ \text{(con }R=0)}D\;}$$
+
+$$\boxed{\;Y=\frac{G_cG_p}{1+G_cG_p}\,R\;+\;\frac{G_p}{1+G_cG_p}\,D\;}$$
+
+El primer término es $Y/R$ (con $D=0$) y el segundo es $Y/D$ (con $R=0$).
 Por superposición se estudia cada entrada con la otra en cero.
 
 **Regla rápida (sin despejar):**
+
 $$\frac{Y}{\text{entrada}}=\frac{\text{camino directo desde esa entrada hasta }Y}{1+\text{ganancia del lazo}}$$
+
 - Desde $R$ el camino directo es $G_cG_p$. Desde $D$ es solo $G_p$, porque $D$ entra **después** del controlador.
 - El **denominador $1+G_cG_p$ es el mismo** para todas las entradas. Por eso ambas respuestas tienen la **misma ecuación característica**, salvo que haya cancelaciones (ver abajo).
 
@@ -125,7 +134,9 @@ $$\frac{Y}{\text{entrada}}=\frac{\text{camino directo desde esa entrada hasta }Y
 ($H$ = sensor; con $H=1$ se obtienen las de arriba.)
 
 **Cómo simplificar a mano:** escribir $G_c=\dfrac{n_c}{d_c}$ y $G_p=\dfrac{n_p}{d_p}$ y multiplicar arriba y abajo por $d_cd_p$:
+
 $$\frac{Y}{R}=\frac{n_cn_p}{d_cd_p+n_cn_p},\qquad \frac{Y}{D}=\frac{n_p\,d_c}{d_cd_p+n_cn_p}$$
+
 El polinomio $d_cd_p+n_cn_p$ es la **ecuación característica**. Fíjate que **$d_c$ pasa al numerador de $Y/D$**: si el controlador tiene integrador ($d_c$ contiene $s$), $Y/D$ tiene una $s$ arriba, así que $Y/D(0)=0$ y la perturbación escalón no deja error.
 
 **Atención con las cancelaciones:** si el cero del controlador cancela un polo de la planta, esa cancelación ocurre en $G_cG_p$ (y por tanto en $Y/R$). Pero en $Y/D$ el numerador es $G_p$ **sin** el controlador, así que el polo de la planta **reaparece**. Por eso la respuesta a la perturbación es más lenta con cualquier diseño por cancelación (PI por cancelación, MO, MS).
@@ -160,12 +171,15 @@ Tu = feedback(Gc, Gp);          % U/R
 **PID paralelo:** $\;K_p + \dfrac{K_i}{s} + K_d s$
 
 **PID ideal (ISA / estándar):**
+
 $$\frac{U}{E}=K_c\left(1+\frac{1}{T_i s}+T_d s\right)$$
 
 **PID serie (interactivo, "real"):**
+
 $$\frac{U}{E}=K'_c\left(1+\frac{1}{T'_i s}\right)\frac{T'_d s+1}{\alpha T'_d s+1},\qquad \alpha\in[0.05,\,0.2]\ \text{(filtro)}$$
 
 **Conversión serie → ideal:**
+
 $$K_c=K'_c\left(1+\frac{T'_d}{T'_i}\right),\qquad T_i=T'_i+T'_d,\qquad T_d=\frac{T'_i\,T'_d}{T'_i+T'_d}$$
 
 > ⚠️ P, PI y PD son **iguales** en ambas formas. Solo el **PID** cambia.
@@ -181,6 +195,7 @@ $$K_c=K'_c\left(1+\frac{T'_d}{T'_i}\right),\qquad T_i=T'_i+T'_d,\qquad T_d=\frac
      - PID: $K_b = 1/\sqrt{T_i T_d}$
    - *Clamping:* se detiene la integración mientras el actuador está saturado.
 2. **Filtro en la derivada.** Se implementa como derivada con filtro pasa-bajos de 1er orden:
+
    $$\frac{u_d}{sp-m}=\frac{D N s}{s+N}=\frac{D s}{\frac{1}{N}s+1},\qquad N = 2\pi F_c \ (\text{frecuencia de corte del filtro})$$
 3. **Derivada sobre la medición.** La acción D se calcula solo sobre la medición $m$ y no sobre el error, para evitar el "pulso" (*derivative kick*) que produciría derivar un escalón en la referencia $sp$.
 
@@ -198,7 +213,9 @@ $$\text{PORT: } G(s)=\frac{K e^{-Ls}}{Ts+1}\qquad\qquad \text{SORT: } \frac{K e^
 1. **Ganancia:** $\displaystyle K=\frac{Y_{ss}-Y_0}{\Delta U}$ (ojo con el signo y las unidades).
 2. Medir $T_{28}$ (instante en que la salida alcanza el 28,3 % del cambio total) y $T_{63}$ (63,2 %).
 3. Resolver:
+
 $$T_{28}=L+\frac{T}{3},\qquad T_{63}=L+T$$
+
 $$\boxed{T=\frac{3}{2}\,(T_{63}-T_{28}),\qquad L=T_{63}-T}$$
 
 > ⚠️ $T_{28}$ y $T_{63}$ se miden **desde el instante en que se aplica el escalón**, así que **incluyen el retardo**.
@@ -263,6 +280,7 @@ $$ISE=\int_0^\infty e^2dt\quad IAE=\int_0^\infty |e|\,dt\quad ITAE=\int_0^\infty
 - Válidas para entradas escalón, especialmente con $0.1\le L/T\le 1.0$. Parámetros para el **PID ideal**. El $T_I$ depende más de $\tau$ y menos de $L$ que en ZN/CC.
 
 ### 6.1 Para cambios en la **perturbación**
+
 $$K_c=\frac{a_1}{K}\left(\frac{L}{\tau}\right)^{b_1}\qquad T_I=\frac{\tau}{a_2}\left(\frac{L}{\tau}\right)^{b_2}\qquad T_D=a_3\,\tau\left(\frac{L}{\tau}\right)^{b_3}$$
 
 | Reg. | Par. | ISE | IAE | ITAE |
@@ -282,6 +300,7 @@ $$K_c=\frac{a_1}{K}\left(\frac{L}{\tau}\right)^{b_1}\qquad T_I=\frac{\tau}{a_2}\
 
 ### 6.2 Para cambios en la **referencia** (Rovira)
 Se descarta el P (no da $e_{ss}=0$) y el ISE (respuestas muy oscilatorias). **Ojo: cambia la fórmula de $T_I$.**
+
 $$K_c=\frac{a_1}{K}\left(\frac{L}{\tau}\right)^{b_1}\qquad T_I=\frac{\tau}{a_2+b_2\,(L/\tau)}\qquad T_D=a_3\,\tau\left(\frac{L}{\tau}\right)^{b_3}$$
 
 | Reg. | Par. | IAE | ITAE |
@@ -315,16 +334,21 @@ Planta: $G_p=\dfrac{K}{Ts+1}$. Controlador: PI $\;G_c=K_p\dfrac{T_i s+1}{T_i s}$
 
 ### 8.1 PI por cancelación ($T_i = T$)
 El cero del PI cancela el polo de la planta:
+
 $$G_{LC}(s)=\frac{K_pK}{Ts+K_pK}=\frac{1}{\frac{T}{K_pK}s+1}\quad\Rightarrow\quad T_{LC}=\frac{T}{K_pK},\qquad \boxed{K_p=\frac{T}{T_{LC}\,K},\quad T_i=T}$$
 
 - Con el criterio del 2 %: $t_{ss}\approx 4T_{LC}$.
 - Para que responda de forma lineal, $K_p$ debe ser lo más grande posible **sin saturar** la acción de control ante el máximo cambio de referencia.
 - ❌ **Ante perturbaciones no hay cancelación.** Queda un polo más (el de la planta) y la respuesta es **más lenta**:
+
 $$\frac{Y}{D}=\frac{\frac{T}{K_p}s}{(Ts+1)\left(\frac{T}{K_pK}s+1\right)}$$
+
 - ❌ Es sensible a la incertidumbre en $T$ (una cancelación imperfecta deja un par polo-cero cercano, con una "cola" lenta).
 
 **De dónde salen estas FT** (receta de la sección 2.6). Con $T_i=T$:
+
 $$G_cG_p=K_p\frac{Ts+1}{Ts}\cdot\frac{K}{Ts+1}=\frac{K_pK}{Ts}\quad(\text{el }(Ts+1)\text{ se cancela})$$
+
 - Referencia: $\dfrac{Y}{R}=\dfrac{G_cG_p}{1+G_cG_p}=\dfrac{K_pK/(Ts)}{1+K_pK/(Ts)}=\dfrac{K_pK}{Ts+K_pK}$ (multiplicando arriba y abajo por $Ts$).
 - Perturbación: $\dfrac{Y}{D}=\dfrac{G_p}{1+G_cG_p}=\dfrac{K}{Ts+1}\cdot\dfrac{Ts}{Ts+K_pK}=\dfrac{KTs}{(Ts+1)(Ts+K_pK)}$. Dividiendo el segundo factor por $K_pK$ se llega a la forma de arriba. El factor $(Ts+1)$ es el polo de la planta, que **no** se canceló porque en este camino no pasa por el controlador.
 
@@ -336,21 +360,31 @@ $$G_cG_p=K_p\frac{Ts+1}{Ts}\cdot\frac{K}{Ts+1}=\frac{K_pK}{Ts}\quad(\text{el }(T
 
 ### 8.2 PI con prefiltro (se impone un 2º orden deseado)
 No se cancela nada: se eligen $K_p$ y $T_i$ para que el lazo cerrado tenga los $\zeta$ y $\omega_n$ deseados:
+
 $$G_{LC}=\frac{\omega_n^2(T_is+1)}{s^2+2\zeta\omega_n s+\omega_n^2},\qquad 2\zeta\omega_n=\frac{1+K_pK}{T},\quad \omega_n^2=\frac{K_pK}{T_iT}$$
 
 **De dónde sale:** sin cancelar,
+
 $$G_cG_p=K_p\frac{T_is+1}{T_is}\cdot\frac{K}{Ts+1}=\frac{K_pK(T_is+1)}{T_is(Ts+1)}$$
+
 Ecuación característica ($d_cd_p+n_cn_p=0$, sección 2.6):
+
 $$T_is(Ts+1)+K_pK(T_is+1)=T_iT\,s^2+T_i(1+K_pK)\,s+K_pK=0$$
+
 Dividiendo por $T_iT$ para dejar $s^2$ con coeficiente 1:
-$$s^2+\underbrace{\frac{1+K_pK}{T}}_{2\zeta\omega_n}s+\underbrace{\frac{K_pK}{T_iT}}_{\omega_n^2}=0$$
+
+$$s^2+\frac{1+K_pK}{T}\,s+\frac{K_pK}{T_iT}=0$$
+
+El coeficiente de $s$ corresponde a $2\zeta\omega_n$ y el término independiente a $\omega_n^2$.
 Igualando coeficientes con el 2º orden deseado $s^2+2\zeta\omega_ns+\omega_n^2$ y usando $t_{ss}\approx4/(\zeta\omega_n)$ se despeja:
 
 $$\boxed{\omega_n=\frac{4}{\zeta\,t_{ss}},\qquad K_p=\frac{2\zeta\omega_nT-1}{K},\qquad T_i=\frac{K_pK}{T\omega_n^2}}$$
 
 Las FT resultantes (mismo denominador en ambas):
+
 $$\frac{Y}{R}=\frac{n_cn_p}{d_cd_p+n_cn_p}=\frac{\omega_n^2\,(T_is+1)}{s^2+2\zeta\omega_ns+\omega_n^2},\qquad
 \frac{Y}{D}=\frac{n_p\,d_c}{d_cd_p+n_cn_p}=\frac{(K/T)\,s}{s^2+2\zeta\omega_ns+\omega_n^2}$$
+
 (En $Y/R$: $K_pK(T_is+1)/(T_iT)=\omega_n^2(T_is+1)$. En $Y/D$: $K\cdot T_is/(T_iT)=(K/T)s$.)
 
 - $\zeta=0.7 \Rightarrow M_p\approx4\%$ y $\zeta=0.4\Rightarrow M_p\approx25\%$.
@@ -377,23 +411,32 @@ $$\frac{Y}{R}=\frac{n_cn_p}{d_cd_p+n_cn_p}=\frac{\omega_n^2\,(T_is+1)}{s^2+2\zet
 3. Que el lazo cerrado sea un **2º orden típico con $\zeta=0.707$**: lo más rápido posible con sobrepaso mínimo (≈ 4 %), que es óptimo según ITAE.
 
 **Lazo directo deseado** (con $K_r$ = ganancia de la realimentación/sensor y $T_u$ = **la menor** constante de tiempo, la única que **no** se compensa):
+
 $$G_cG_p=\frac{1}{K_r\,a\,T_u s\,(T_u s+1)}$$
 
 En lazo cerrado:
+
 $$G_{LC}=\frac{\frac{1}{K_r a T_u^2}}{s^2+\frac{1}{T_u}s+\frac{1}{aT_u^2}}\ \Rightarrow\ \omega_n=\frac{1}{T_u\sqrt a},\quad \zeta=\frac{\sqrt a}{2}$$
+
 Con **$a=2$** se obtiene $\zeta=\sqrt2/2=0.707$. Despejando:
+
 $$\boxed{G_c(s)=\frac{1}{K_r\,2T_u s\,(T_us+1)\,G_p(s)}}$$
 
 **Ejemplo 3:** $G_p=\dfrac{K_1K_2}{(T_1s+1)(T_2s+1)}$ con $T_1<T_2$, así que $T_u=T_1$:
+
 $$G_c=\frac{T_2s+1}{2T_1K_rK_1K_2\,s}=\frac{T_2s+1}{Ts}=P+\frac{I}{s},\quad T=2T_1K_rK_1K_2,\ P=\frac{T_2}{T},\ I=\frac1T$$
+
 Es un **PI cuyo cero cancela la constante de tiempo mayor**. Con $K_1=2,T_1=1,K_2=3,T_2=2,K_r=1$: $T=12$, $P=0.167$, $I=0.083$.
 Como en toda cancelación, la respuesta ante la perturbación resulta **más lenta**.
 
 **FT de lazo cerrado del Ejemplo 3** (receta de la sección 2.6, $K_r=1$):
 - Por diseño $G_cG_p=\dfrac{1}{2T_1s(T_1s+1)}$, así que ante la referencia:
+
   $$\frac{Y}{R}=\frac{1}{2T_1s(T_1s+1)+1}=\frac{1}{2T_1^2s^2+2T_1s+1}\ \xrightarrow{T_1=1}\ \frac{1}{2s^2+2s+1}\quad(\zeta=0.707)$$
 - Ante la perturbación a la entrada de la planta:
+
   $$\frac{Y}{D}=\frac{G_p}{1+G_cG_p}=\frac{K_1K_2}{(T_1s+1)(T_2s+1)}\cdot\frac{2T_1s(T_1s+1)}{2T_1^2s^2+2T_1s+1}=\frac{2T_1K_1K_2\,s}{(T_2s+1)(2T_1^2s^2+2T_1s+1)}$$
+
   Con los números: $\dfrac{12\,s}{(2s+1)(2s^2+2s+1)}$. Reaparece el polo **lento** $(T_2s+1)$ que el PI había cancelado; la $s$ de arriba (integrador del PI) da error cero.
 
 **Regla práctica:** si la planta tiene 1 constante lenta, el MO da un **PI**; si tiene 2 constantes lentas, un **PID** (dos ceros); si la planta ya tiene integrador, un **P** (o PD).
@@ -407,6 +450,7 @@ Como en toda cancelación, la respuesta ante la perturbación resulta **más len
 **Objetivos:** compensar las constantes lentas (igual que en MO), alcanzar el estado estacionario rápido y tener buena estabilidad relativa. Se diseña en **respuesta en frecuencia** (Bode).
 
 **Lazo directo deseado:**
+
 $$G_cG_p=\frac{4T_us+1}{K_r\,8T_u^2\,s^2\,(T_us+1)}
 \qquad\Rightarrow\qquad
 \boxed{G_c=\frac{4T_us+1}{K_r\,8T_u^2 s^2(T_us+1)\,G_p(s)}}$$
@@ -425,10 +469,14 @@ Lectura del Bode:
 
 **FT de lazo cerrado del Ejemplo 4** (sección 2.6; perturbación a la entrada de la planta). Se escribe $G_p=\dfrac{100}{s(s+10)}$, o sea $n_p=100$, $d_p=s(s+10)$:
 - **MS** ($G_c=\dfrac{0.5s+1.25}{s}$, $n_c=0.5s+1.25$, $d_c=s$). Ecuación característica: $d_cd_p+n_cn_p=s^2(s+10)+100(0.5s+1.25)=s^3+10s^2+50s+125$.
+
   $$\frac{Y}{R}=\frac{n_cn_p}{\ldots}=\frac{50s+125}{s^3+10s^2+50s+125},\qquad \frac{Y}{D}=\frac{n_pd_c}{\ldots}=\frac{100\,s}{s^3+10s^2+50s+125}$$
+
   $Y/D(0)=0$: **sin error** ante la perturbación (la $s$ de arriba es el integrador del PI). El cero $(50s+125)$ de $Y/R$ es el que da el sobrepaso grande del MS.
 - **MO** ($G_c=0.5$, $n_c=0.5$, $d_c=1$). Ecuación característica: $s(s+10)+50=s^2+10s+50$.
+
   $$\frac{Y}{R}=\frac{50}{s^2+10s+50},\qquad \frac{Y}{D}=\frac{100}{s^2+10s+50}$$
+
   $Y/D(0)=100/50=2\neq0$: ante una perturbación escalón unitaria la salida queda desviada en 2 (error $=-2=-1/K_p$), porque el integrador está en la planta y no en el controlador (sección 2.5).
 
 ---
@@ -441,9 +489,12 @@ Lectura del Bode:
 
 **Síntesis (de adentro hacia afuera):**
 1. **Lazo interno** por MO, con $T_1$ como constante no compensable:
+
    $$G_{reg1}=\frac{T_2s+1}{T's},\qquad T'=2T_1K_{real1}K_1K_2$$
+
    Queda $G_{LC1}=\dfrac{1/K_{real1}}{2T_1^2s^2+2T_1s+1}\approx\dfrac{1/K_{real1}}{2T_1s+1}$ (el término $2T_1^2$ se desprecia si $T_1$ es pequeño).
 2. **Lazo externo** por MO, visto como planta $\dfrac{1/K_{real1}}{2T_1s+1}\cdot\dfrac{K_3}{T_3s+1}$ y con **$2T_1$** como nueva constante no compensable:
+
    $$G_{reg}=\frac{T_3s+1}{T''s},\qquad T''=\frac{4K_3K_{real}T_1}{K_{real1}}$$
 
 **Ejemplo 5:** $G_p=\dfrac{1}{0.1s+1}\cdot\dfrac{2}{s+1}\cdot\dfrac{3}{10s+1}$, con $K_{real}=K_{real1}=1$.
@@ -464,8 +515,10 @@ Lectura del Bode:
 ```
 1. Ecuaciones: $U=G_{c1}\big(G_{c2}(R-Y)-V\big)$, $\;V=G_a(U+D)$, $\;Y=G_bV$.
 2. Reemplazando $U$ y $Y=G_bV$ en la ecuación de $V$:
+
    $$V\,\big[1+G_aG_{c1}+G_aG_{c1}G_{c2}G_b\big]=G_aG_{c1}G_{c2}\,R+G_a\,D$$
 3. Multiplicando por $G_b$:
+
    $$\frac{Y}{R}=\frac{G_{c2}G_{c1}G_aG_b}{1+G_aG_{c1}+G_aG_{c1}G_{c2}G_b},\qquad
    \frac{Y}{D}=\frac{G_aG_b}{1+G_aG_{c1}\,(1+G_{c2}G_b)}$$
 4. Forma equivalente de $Y/R$: se reemplaza el lazo interno por su lazo cerrado $G_{LC1}=\dfrac{G_{c1}G_a}{1+G_{c1}G_a}$ y queda un lazo simple $\dfrac{G_{c2}G_{LC1}G_b}{1+G_{c2}G_{LC1}G_b}$. Esto es lo que se usa para diseñar el externo.

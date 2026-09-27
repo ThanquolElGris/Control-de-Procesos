@@ -27,10 +27,13 @@
 Como $\rho$ y $V$ son **constantes**, $\dfrac{d(\rho V)}{dt}=0$ y $\rho$ se simplifica en todo:
 
 **Balance total** (queda algebraico, sin dinámica):
+
 $$F_1(t)+F_2-F_3(t)=0\ \Rightarrow\ \boxed{F_3(t)=F_1(t)+1}$$
 
 **Balance parcial** (con $V$ constante, $\frac{d(x_3V)}{dt}=V\frac{dx_3}{dt}$):
+
 $$x_1F_1(t)+x_2(t)F_2-x_3(t)F_3(t)=V\frac{dx_3(t)}{dt}$$
+
 $$\boxed{10\,\frac{dx_3(t)}{dt}=0.6\,F_1(t)+x_2(t)-x_3(t)F_3(t)}$$
 
 ## b) Variables, objetivos y grados de libertad
@@ -61,19 +64,25 @@ $$x_{3o}=\frac{x_1F_{1o}+x_{2o}F_2}{F_{3o}}=\frac{0.6\cdot3+0.4\cdot1}{4}=\frac{
 ## d) Primera ecuación en variables de desviación
 
 Se define $\Delta F_1 = F_1-F_{1o}$, y análogo para las demás. Restando el estado estable:
+
 $$\Delta F_3(t)=\Delta F_1(t)\quad\xrightarrow{\ \mathcal L\ }\quad \boxed{F_3(s)=F_1(s)}$$
+
 (Ganancia 1 y sin dinámica: $F_3$ sigue a $F_1$ instantáneamente.)
 
 ## e) No linealidad de la segunda ecuación, Taylor y Laplace
 
 La no linealidad es el **producto** $x_3(t)F_3(t)$, o bien $x_3F_1$ si se sustituye $F_3=F_1+1$. Por Taylor, alrededor del punto de operación:
+
 $$x_3F_3\approx x_{3o}F_{3o}+F_{3o}\,\Delta x_3+x_{3o}\,\Delta F_3=x_{3o}F_{3o}+4\,\Delta x_3+0.55\,\Delta F_1$$
 
 Se sustituye y se resta el estado estable ($0.6F_{1o}+x_{2o}-x_{3o}F_{3o}=0$):
+
 $$10\frac{d\Delta x_3}{dt}=0.6\Delta F_1+\Delta x_2-4\Delta x_3-0.55\Delta F_1$$
+
 $$10\frac{d\Delta x_3}{dt}+4\Delta x_3=0.05\,\Delta F_1+1\cdot\Delta x_2$$
 
 Laplace, con condiciones iniciales nulas porque son desviaciones:
+
 $$\boxed{X_3(s)=\frac{0.05}{10s+4}F_1(s)+\frac{1}{10s+4}X_2(s)=\frac{0.0125}{2.5s+1}F_1(s)+\frac{0.25}{2.5s+1}X_2(s)}$$
 
 Coincide con la planta del ejercicio 2. En resumen:
@@ -114,17 +123,22 @@ $$G_p(s)=\frac{0.05}{10s+4}=\frac{0.0125}{2.5s+1}\ (K=0.0125,\ T=2.5)\qquad G_d(
 ## a) Diseño
 
 **1. ¿Qué controlador?** La planta es **tipo 0**. Para tener error cero en estado estable ante un escalón (en la referencia, y de paso en la perturbación) hace falta **acción integral en el controlador**. Se usa un **PI**:
+
 $$G_c(s)=K_p\frac{T_is+1}{T_is}$$
 
 **2. Restricción de saturación.** En estado estable, para subir $x_3$ en 0.02 hace falta:
+
 $$\Delta F_{1,ss}=\frac{0.02}{K}=\frac{0.02}{0.0125}=\mathbf{1.6}\ (<2\ \checkmark)$$
+
 Hay margen, pero es poco (1.6 de 2). **El transitorio del mando no puede pasar de 2**, y eso fija la máxima rapidez alcanzable.
 
 ### Diseño A: PI por cancelación (el método de la clase)
 - Cancelación del polo de la planta: $T_i=T=\mathbf{2.5}$ min.
 - Lazo cerrado de 1er orden: $G_{LC}=\dfrac{1}{T_{LC}s+1}$, con $T_{LC}=\dfrac{T}{K_pK}$.
 - La acción de control es
+
 $$\frac{U}{R}=\frac{G_c}{1+G_cG}=K_p\frac{Ts+1}{Ts+K_pK}$$
+
   En $t=0^+$ vale $u=K_p\cdot0.02$ (el salto proporcional) y después **decrece monótonamente** hasta 1.6. El máximo está en $t=0^+$.
 - Condición de no saturar: $K_p\cdot0.02\le2\ \Rightarrow\ \boxed{K_p\le100}$.
 - Se toma la mayor ganancia posible (Conf. 3: "la ganancia debe ser lo mayor posible mientras no se sature"): **$K_p=100$, $T_i=2.5$**.
@@ -136,6 +150,7 @@ $$\boxed{G_c(s)=100\,\frac{2.5s+1}{2.5s}=100+\frac{40}{s}}$$
 
 ### Diseño B (alternativo): PI con 2º orden deseado y prefiltro
 Con $\zeta=0.7$ ($M_p\approx4\%$):
+
 $$\omega_n=\frac{4}{\zeta t_{ss}},\qquad K_p=\frac{2\zeta\omega_nT-1}{K},\qquad T_i=\frac{K_pK}{T\omega_n^2}$$
 
 Barrido de $t_{ss}$ para ver cuál es el más rápido que **no satura**:
@@ -180,8 +195,11 @@ Aquí la perturbación $x_2$ **no** entra a la entrada de la planta, sino por su
       └────────────────────────────────────────┘
 ```
 Ecuaciones: $E=R-X_3$, $F_1=G_cE$, $X_3=G\,F_1+G_d\,X_2$. Reemplazando:
+
 $$X_3=GG_c(R-X_3)+G_dX_2\ \Rightarrow\ X_3\,(1+G_cG)=G_cG\,R+G_d\,X_2$$
+
 $$\frac{X_3}{R}=\frac{G_cG}{1+G_cG},\qquad \frac{X_3}{X_2}=\frac{G_d}{1+G_cG},\qquad \frac{F_1}{R}=\frac{G_c}{1+G_cG}$$
+
 (Regla: camino directo desde la entrada / (1 + ganancia del lazo). Desde $X_2$ el camino directo es $G_d$.)
 
 **Diseño A** ($G_c=100\frac{2.5s+1}{2.5s}$, $G=\frac{0.0125}{2.5s+1}$, $G_d=\frac{0.25}{2.5s+1}$):
@@ -193,12 +211,16 @@ $$\frac{X_3}{R}=\frac{G_cG}{1+G_cG},\qquad \frac{X_3}{X_2}=\frac{G_d}{1+G_cG},\q
 
 **Diseño B** ($K_p=88.42$, $T_i=1.222$), sin cancelación. Se usa $d_cd_p+n_cn_p$ (numeradores y denominadores del controlador y la planta):
 1. Ecuación característica: $T_is(2.5s+1)+K_p\cdot0.0125\,(T_is+1)=0$. Dividiendo por $2.5T_i$:
+
    $$s^2+\frac{1+0.0125K_p}{2.5}s+\frac{0.0125K_p}{2.5T_i}=s^2+0.842s+0.362$$
+
    ($2\zeta\omega_n=0.842$, $\omega_n^2=0.362$ → $\omega_n=0.602$, $\zeta=0.7$ ✔).
 2. Referencia sin prefiltro: $\dfrac{X_3}{R}=\dfrac{0.362\,(1.222s+1)}{s^2+0.842s+0.362}=\dfrac{0.442s+0.362}{s^2+0.842s+0.362}$.
    Con prefiltro $\frac{1}{1.222s+1}$ se cancela el cero: $\dfrac{0.362}{s^2+0.842s+0.362}$.
 3. Perturbación: numerador $=0.25\cdot d_c=0.25\,T_is$, dividido por $2.5T_i$:
+
    $$\frac{X_3}{X_2}=\frac{0.1\,s}{s^2+0.842s+0.362}$$
+
    Tiene los **mismos polos** que ante la referencia (el prefiltro no afecta este camino).
 
 **Lectura:** en ambos diseños la $s$ del numerador de $X_3/X_2$ viene del integrador del PI, así que $X_3/X_2(0)=0$ y la perturbación escalón no deja error. La diferencia está en los polos: A tiene el polo lento $\tau=2.5$ ante la perturbación; B tiene los polos de diseño ($\zeta\omega_n=0.42$, $t_s\approx9.5$ min).
