@@ -10,7 +10,7 @@
 | `pid26.m`, `metricas26.m`, `reglas26.m`, `port26.m` | Funciones auxiliares. |
 | `sim26.py`, `tune26.py`, `explore26.py`, `plots26.py` | Lo mismo en Python (verificación y figuras). |
 
-**Cómo correrlo:** `calculos26` y después `main26`. Los `.m` no usan toolboxes (todos los bloques son de 1er orden y los retardos se simulan con buffers), así que corren en MATLAB y en Octave. Se probaron en Octave y dan los mismos números que Python.
+**Cómo correrlo:** copia **todos** los `.m` de esta carpeta a una misma carpeta, déjala como *Current Folder* en MATLAB y ejecuta `calculos26` y después `main26`. `main26` necesita `simular26.m`, `pid26.m` y `metricas26.m`. `calculos26.m` ya trae dentro sus funciones auxiliares, pero en Octave también necesita `reglas26.m` y `port26.m` al lado. Los `.m` no usan toolboxes (todos los bloques son de 1er orden y los retardos se simulan con buffers), así que corren en MATLAB y en Octave. Se probaron en Octave y dan los mismos números que Python.
 
 ---
 
