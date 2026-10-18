@@ -20,6 +20,7 @@
 ## Cómo usar los modelos
 
 - **Abrir y simular:** doble clic en el `.slx` → *Run*. Cada modelo trae un **Scope** con referencia y salida (vía *Mux*).
+- **Nota explicativa:** cada modelo trae, debajo del diagrama, una nota amarilla que explica qué ejercicio resuelve, la idea del esquema, de dónde salen los parámetros, cómo cambiar los casos y qué resultado esperar (es la misma que se ve en las imágenes de abajo).
 - **Salidas para graficar:** cada modelo tiene bloques *Out1* (salida, mando, referencia…). Con *Configuration Parameters → Data Import/Export → Output* = `yout` (formato *Dataset*), después de `o = sim('modelo')` se leen como `o.yout{1}.Values` (salida principal), `o.yout{2}.Values` (mando), etc.
 - **Sumadores redondos:** el signo de arriba corresponde a la entrada que llega desde arriba (perturbación o feedforward), el de la izquierda a la señal principal y el de abajo a la realimentación. Los **rectangulares** (`+--`) tienen las entradas en orden de arriba hacia abajo.
 - **Model Settings:** solver automático (ode45) con *Max step size* fijado (0.002–0.1 según el modelo) para que los retardos y los cambios bruscos se integren bien.

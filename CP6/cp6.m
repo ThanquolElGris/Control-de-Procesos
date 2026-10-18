@@ -1,6 +1,17 @@
 %% CP-6: Predictor de Smith, compensador de respuesta inversa y control inferencial
-% Simulación con connect + lsim discretizado (ZOH exacto para escalones). Los modelos
-% Simulink de los ej. 3 y 5 se construyen con cp6_simulink.m.
+% Qué hace este script:
+%   - Calcula los controladores y compensadores de los 5 ejercicios.
+%   - Simula cada esquema y guarda los gráficos ej1_*.png, ej2.png, ej3.png, ej4.png y ej5*.png.
+%   - Imprime los parámetros y métricas que se citan en README.md.
+% Simulación con connect + lsim discretizado (ZOH exacto para escalones). Los modelos Simulink
+% de todos los ejercicios se construyen con cp6_simulink.m.
+%
+% Idea común de los tres compensadores de la Conf. 6: el controlador NO realimenta la medición tal
+% cual, sino una señal corregida con un MODELO de la planta:
+%   - Smith:            realimenta la salida "sin retardo"            -> el retardo sale del lazo.
+%   - Respuesta inversa: realimenta la salida "sin el cero positivo"   -> se puede usar MO.
+%   - Inferencial:      realimenta una ESTIMACIÓN de la variable que no se mide.
+% Por eso los tres dependen de que el modelo sea bueno.
 clear; clc; close all;
 s = tf('s');
 set(groot, 'defaultFigureVisible', 'off');
@@ -8,18 +19,24 @@ warning('off', 'all');                               % avisos de margin/c2d con 
 simu = @(M, u, t) lsim(c2d(M, t(2)-t(1), 'zoh'), u, t);
 
 %% ======================== EJERCICIO 1: calentador PORT ========================
+% G = 5 e^{-0.8s}/(s+1): la perturbación se modela como un voltaje que se suma al mando.
 K = 5;  T = 1;  L = 0.8;                             % °C/V, min, min ; u en [0, 10] V
 P = K/(T*s+1);
 G = P;  G.OutputDelay = L;
 fprintf('Ej1: L/T = %.2f\n', L/T);
 
 % ---- a) PI por ZN ----
+% L/T = 0.8 está fuera del rango de validez de ZN (0.1-0.5). El retardo domina: para ser estable,
+% el lazo admite poca ganancia (Kc*K = 1.2) y resulta lento.
 [Ku,~,wu] = margin(G);  Tu = 2*pi/wu;
 Kc_zn = Ku/2.2;  Ti_zn = Tu/1.2;
 fprintf('a) Ku = %.4f  wu = %.4f rad/min  Tu = %.4f min  ->  Kc = %.4f  Ti = %.4f min\n', Ku, wu, Tu, Kc_zn, Ti_zn);
 C_zn = Kc_zn*(1 + 1/(Ti_zn*s));
 
 % ---- b) PI por cancelación (Ti = T) + predictor de Smith ----
+% Con el predictor, el controlador ve P = 5/(s+1) (sin retardo). El PI cancela el polo con Ti = T y
+% el lazo queda de 1er orden: Y/R = 5Kp/(s + 5Kp) * e^{-0.8s}.
+% En t = 0+ el integrador todavía no aporta y u(0+) = Kp*Δr: para no saturar con Δr = 2 °C, Kp <= 5.
 % u(0+) = Kp*Δr  ->  Kp = 10 V / 2 °C = 5  (máximo sin saturar)
 Kp = 10/2;  Ti = T;
 C_sp = Kp*(Ti*s+1)/(Ti*s);
@@ -41,6 +58,9 @@ metr('PI ZN', t, yzn(:,1), 2, 10);  metr('Smith', t, ysp(:,1), 2, 10);
 fprintf('   u máx: ZN = %.3f V, Smith = %.3f V\n', max(yzn(:,2)), max(ysp(:,2)));
 
 % ---- b) Robustez: ±10 % en K, T y L (uno a la vez); el predictor mantiene el modelo nominal ----
+% Se cambia la planta real y se deja el modelo del predictor fijo (eso es un error de modelo).
+% Resultado: errores en K o T apenas afectan; un error de 10 % en L desestabiliza el lazo con Kp = 5,
+% porque ese lazo es 20 veces más rápido que el retardo. Con Kp = 1 el sistema tolera los tres errores.
 tit = {'K','T','L'};
 for Kpr = [Kp 1]                                     % Kp = 5 (pedido) y Kp = 1 (T_LC = 0.2 min, más robusto)
     Cr = Kpr*(Ti*s+1)/(Ti*s);
@@ -63,6 +83,9 @@ for Kpr = [Kp 1]                                     % Kp = 5 (pedido) y Kp = 1 
 end
 
 % ---- c) Predictor de Smith filtrado: Fr = (beta s + 1)/(Tf s + 1) ----
+% En el Smith clásico, la respuesta a una perturbación conserva el polo lento de la planta (s = -1/T),
+% que deja una "cola" lenta. El filtro Fr actúa sobre el error de predicción (y - y_md) y se elige
+% para que ese polo se cancele. Fr(0) = 1 para mantener el error cero; la referencia no cambia.
 % Y/D = P e^{-Ls} [1 - C P e^{-Ls} Fr/(1+CP)] ; se anula el polo lento s = -1/T si
 % Fr(-1/T) = (1 + CP)/(CP e^{-Ls}) evaluado en s = -1/T
 s0 = -1/T;  CP0 = K*Kp/(T*s0);                      % C*P = K Kp/(T s) por la cancelación
@@ -84,6 +107,8 @@ for k = 1:2
 end
 
 %% ======================== EJERCICIO 2: respuesta inversa con válvula ========================
+% Dos capacidades en oposición: G1 (lenta, más ganancia) - G2 (rápida). Al principio domina G2 y la
+% salida baja; al final domina G1 y sube. En la FT eso es un cero en el semiplano derecho (s = +1).
 Gv = 2/(0.5*s+1);  G1 = 2/(3*s+1);  G2 = 1/(s+1);
 Gp = (-s+1)/((3*s+1)*(s+1));                        % = G1 - G2
 assert(norm(Gp - (G1 - G2), inf) < 1e-9)
@@ -95,6 +120,9 @@ C_zn = (Ku/2.2)*(1 + 1/((Tu/1.2)*s));
 fprintf('\nEj2 a) Ku = %.4f  Tu = %.4f  ->  Kc = %.4f  Ti = %.4f\n', Ku, Tu, Ku/2.2, Tu/1.2);
 
 % ---- b) Compensador: y* = y + Kcomp*Gv*(1/(s+1) - 1/(3s+1))*u ----
+% Se suma a la medición una señal calculada con el modelo que anula el coeficiente de s del
+% numerador: K = (K1 t2 - K2 t1)/(t2 - t1). Incluye Gv porque el compensador recibe el mando u,
+% que pasa por la válvula antes de llegar a la planta. Gcomp(0) = 0, así que no altera el estado estable.
 K1 = 2; t1 = 3; K2 = 1; t2 = 1;
 Kcomp = (K1*t2 - K2*t1)/(t2 - t1);                   % = 0.5
 Gcomp = Gv*s/((3*s+1)*(s+1))                        % = 0.5*Gv*(1/(s+1) - 1/(3s+1)) = 2s/((0.5s+1)(3s+1)(s+1))
@@ -103,6 +131,7 @@ Gstar = Gv/((3*s+1)*(s+1))                           % lo que enfrenta el contro
 assert(norm(Gstar - (G + Gcomp), inf) < 1e-9)
 
 % ---- c) Módulo óptimo sobre Gstar (Tu = 0.5): PID ----
+% Gstar tiene dos constantes que se compensan (3 y 1), así que el MO da un PID (dos ceros).
 Gc_mo = (3*s+1)*(s+1)/(2*s)                         % = 1/(2*0.5*s*(0.5s+1)*Gstar) = 2 + 0.5/s + 1.5 s
 C_mo  = pid(2, 0.5, 1.5, 0.05);                      % con filtro derivativo para implementarlo
 
@@ -119,10 +148,15 @@ guardar(f, 'ej2.png');
 metr('PI ZN', t, ya(:,1), 1, 30);  metr('comp + MO', t, yc(:,1), 1, 30);
 
 % ---- d) Conjunto controlador-compensador: u = Gc/(1 + Gc*Gcomp) * (r - y) ----
+% El compensador forma un lazo interno alrededor del controlador. Reduciéndolo con feedback se obtiene
+% UN solo controlador equivalente, que se podría cargar en un regulador industrial sin bloque aparte.
 Geq = zpk(minreal(feedback(Gc_mo, Gcomp), 1e-6))     % = 1.5 (s+2)(s+1)(s+0.333)/(s (s+4))
 Geq_f = zpk(minreal(feedback(tf(C_mo), Gcomp), 1e-6)) % con el PID filtrado (propia)
 
 %% ======================== EJERCICIO 3: Gv = 2/(2s+2), Gp = (-5s+1)/(4s+1) ========================
+% Un MO directo invertiría la planta, y con ella el cero en +0.2: el controlador tendría un polo
+% inestable. Primero se compensa; para eso Gp se escribe como dos capacidades en oposición
+% (división de polinomios), con una de constante de tiempo cero.
 Gv = 2/(2*s+2);  Gp = (-5*s+1)/(4*s+1);  G = minreal(Gv*Gp);
 % Gp = 2.25/(4s+1) - 1.25  -> K1 = 2.25, t1 = 4, K2 = 1.25, t2 = 0
 Kcomp = (2.25*0 - 1.25*4)/(0 - 4);                    % = 1.25
@@ -153,6 +187,12 @@ metr('Ej3 a=2', t, y3mo(:,1), 1, 1e9);  metr('Ej3 a=2.5', t, y3(:,1), 1, 1e9);
 fprintf('   subpaso inicial = %.4f\n', min(y3(:,1)));
 
 %% ======================== EJERCICIO 4: k1/(Ts+1) - k2/(s(Ts+1)) ========================
+% G = (k1 s - k2)/(s(Ts+1)): cero en s = k2/k1, positivo (fase no mínima) si k1 y k2 tienen el mismo signo.
+% Compensador: se quita la rama rápida de signo contrario, Gcomp = -k1/(Ts+1), y queda G* = -k2/(s(Ts+1)).
+% No se usa la forma de la clase con 1/s en el compensador: un integrador en lazo abierto hace el
+% esquema internamente inestable ante perturbaciones. Gcomp(0) = -k1 no causa error porque, con la
+% planta integradora, en estado estable u -> 0 y entonces y* -> y.
+% Controlador: G* ya integra, así que basta un P (error cero ante escalón). MO con Tu = T.
 f = figure('Position',[100 100 800 600]);  t = (0:0.005:40)';  r = (t >= 1);  par = [4 2 3; 2 4 3];
 for k = 1:2
     k1 = par(k,1); k2 = par(k,2); T = par(k,3);
@@ -172,6 +212,11 @@ end
 xlabel('t'); guardar(f, 'ej4.png');
 
 %% ======================== EJERCICIO 5: control inferencial ========================
+% X_D (composición) no se mide; T (temperatura) sí. Ambas dependen de R (mando) y X_F (perturbación).
+% Despejando X_F de la ecuación de T y reemplazando en la de X_D:
+%     X_D estimada = (Gp1 - (Gd1/Gd2) Gp2) R + (Gd1/Gd2) T
+% Gd1/Gd2 tiene los mismos retardos arriba y abajo (5 min), que se cancelan: estimador realizable.
+% El controlador realimenta la estimación y se diseña para Gp1 (lo que ve el lazo si el modelo es exacto).
 Gd1 = 0.9/(70*s+1);  Gd1.OutputDelay = 5;            % XD <- XF
 Gp1 = 1.2/(30*s+1);  Gp1.OutputDelay = 10;           % XD <- R
 Gd2 = 0.2/(60*s+1);  Gd2.OutputDelay = 5;            % T  <- XF
@@ -226,6 +271,9 @@ function M = lazo_simple(C, G, ~)
 end
 
 function M = smith(C, G, P, L, Fr)
+    % G: planta real (con su retardo). P y L: MODELO nominal usado por el predictor.
+    % ym = P u (predicción sin retardo), ymd = P e^{-Ls} u (predicción con retardo).
+    % y - ymd = lo que el modelo no explica (perturbaciones y errores de modelo), filtrado por Fr.
     % Predictor de Smith (filtrado si Fr ~= 1): e = r - [P u + Fr (y - P e^{-Ls} u)]
     C = tf(C); C.InputName = 'e'; C.OutputName = 'u';
     G.InputName = 'a'; G.OutputName = 'y';
@@ -245,6 +293,8 @@ function M = lazo_comp(C, G, Gcomp, ~)
 end
 
 function M = inferencial(C, Gp1, Gd1, Gp2, Gd2, Gp1m, Gp2m, Gr)
+    % Los primeros cuatro argumentos son la planta REAL; Gp1m, Gp2m y Gr son el MODELO del estimador.
+    % Si difieren (ej. 5 d), la estimación queda sesgada y X_D real no llega a la referencia.
     % Planta (Gp1, Gd1, Gp2, Gd2) y estimador con modelo nominal (Gp1m, Gp2m, Gr = Gd1/Gd2).
     % Entradas [r xf], salidas [xd xd_est]
     C = tf(C); C.InputName = 'e'; C.OutputName = 'R';

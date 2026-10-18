@@ -26,6 +26,12 @@ lin(m,'Sum_u/1','Gv/1','u');    lin(m,'Gv/1','Sum_d/2');         lin(m,'Pert/1',
 lin(m,'Kd/1','Sum_d/1');        lin(m,'Sum_d/1','Gp/1');         lin(m,'Gp/1','salida/1','y');
 lin(m,'Gp/1','Sum_e/2');        lin(m,'Sum_u/1','u/1');          lin(m,'Ref/1','ref/1');
 alcance(m, 'Ref/1', 'Gp/1', [7 -1.2]);
+nota(m, {'CP5 Ej. 1: control por módulo óptimo (feedback) + feedforward de la perturbación.', ...
+    'Feedback: Gc_MO = (2s+1)/(3s) es un PI cuyo cero cancela la constante lenta de Gp (T = 2); lazo cerrado con zeta = 0.707.', ...
+    'Feedforward: se mide d y se actúa antes de que afecte la salida. Gff = -Gd/(Gv Gp) = -4/Gv = -4(0.5s+1) (impropia):', ...
+    '   se implementa con un polo rápido, -4(0.5s+1)/(0.01s+1). Para el FF estático usar Gff = -4.', ...
+    'FF_on = 1 activa el feedforward y FF_on = 0 lo desactiva (solo feedback). El FF no cambia la respuesta a la referencia.', ...
+    'Experimento: r = 2 en t = 1 y d = 0.1 en t = 10. Pico ante d: 0.39 solo FB, 0.15 FF estático, 0.006 FF dinámico.'});
 terminar(m, '20', '0.01');
 for ff = {'0','1'}
     set_param([m '/FF_on'], 'Gain', ff{1});  o = sim(m);  [t,y] = senal(o,1);
@@ -80,6 +86,18 @@ for caso = {'simple','cascada'}
     lin(m,'G2/1','Lp/1');         lin(m,'Lp/1','salida1/1','salida1');  lin(m,'Lp/1','Sum_e1/2');
     lin(m,'Sum_u/1','u/1');       lin(m,'G1/1','salida2/1');  lin(m,'Ref/1','ref/1');
     alcance(m, 'Ref/1', 'Lp/1', [c+9 -1.2]);
+    if c == 0
+        txt = {'CP5 Ej. 2 a), b) y d): lazo simple con PID por Ziegler-Nichols sobre salida1 (con el retardo Lp = 1).', ...
+               'PID ideal (ZN serie convertido): Kc = 0.737, Ti = 5.32, Td = 0.851 (Ku = 0.943, Tu = 8.51). Mp ~ 55 % (típico de ZN).'};
+    else
+        txt = {'CP5 Ej. 2 c) y d): cascada. Lazo interno sobre salida2 (antes de G2 y del retardo) y lazo externo sobre salida1.', ...
+               'Interno: PI por módulo óptimo 4 + 2/s (la planta interna no tiene retardo, así que no tiene Ku y ZN no sirve).', ...
+               'Externo: PID por ZN sobre el lazo interno cerrado: Kc = 0.631, Ti = 3.36, Td = 0.538.', ...
+               'La perturbación entra dentro del lazo interno: la cascada reduce su pico unas 5 veces respecto del lazo simple.'};
+    end
+    nota(m, [txt, {'Feedforward: Gff = -Gd e^{-2s}/Gv = -(s+4)/(s+10) e^{-2s}. Es propio y con retardo positivo: realizable exacto.', ...
+                   'FF_on = 1/0 activa o desactiva el FF (se suma al mando de la válvula). Con FF la perturbación prácticamente desaparece.', ...
+                   'Experimento: r = 2 en t = 1 y d = 0.1 en t = 30. Para ver solo la perturbación, poner Final value = 0 en Ref.'}]);
     terminar(m, '60', '0.01');
     for ff = {'0','1'}
         set_param([m '/FF_on'], 'Gain', ff{1});  o = sim(m);  [t,y] = senal(o,1);
@@ -92,6 +110,13 @@ for caso = {'simple','cascada'}
 end
 
 %% ======================== funciones ========================
+function nota(m, lineas)
+    % Nota de texto explicativa debajo del diagrama (queda guardada en el .slx y sale en la imagen)
+    b = find_system(m, 'SearchDepth', 1, 'Type', 'Block');  p = cell2mat(get_param(b, 'Position'));
+    a = Simulink.Annotation(m, strjoin(lineas, newline));
+    a.Position = [min(p(:,1)) max(p(:,4))+50 min(p(:,1))+10 max(p(:,4))+60];
+    a.HorizontalAlignment = 'left';  a.BackgroundColor = '[1 1 0.88]';  a.FontSize = 11;
+end
 function [Kc,Ti,Td] = zn_pid(Ku, Tu)
     Kcs = Ku/1.6;  Tis = Tu/2;  Tds = Tu/8;
     Kc = Kcs*(1+Tds/Tis);  Ti = Tis+Tds;  Td = Tis*Tds/(Tis+Tds);

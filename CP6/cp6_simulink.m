@@ -27,6 +27,10 @@ lin(m,'Sat/1','Sum_d/2','u');  lin(m,'Pert/1','Sum_d/1','d');  lin(m,'Sum_d/1','
 lin(m,'G/1','L/1');            lin(m,'L/1','T/1','T');         lin(m,'L/1','Sum_e/2');
 lin(m,'Sat/1','u/1');          lin(m,'Ref/1','ref/1');
 alcance(m, 'Ref/1', 'L/1', [6.5 -1.3]);
+nota(m, {'CP6 Ej. 1 a): calentador PORT 5 e^{-0.8s}/(s+1) con PI por Ziegler-Nichols y actuador de 0 a 10 V (Sat).', ...
+    'Ku = 0.529 y Tu = 2.57 min  ->  Kc = Ku/2.2 = 0.240, Ti = Tu/1.2 = 2.14 min.', ...
+    'L/T = 0.8 está fuera del rango de ZN (0.1-0.5): el retardo obliga a usar poca ganancia y el lazo queda lento (ts ~ 8.7 min).', ...
+    'Experimento: r = 2 °C en t = 1 min y perturbación de 0.1 V sumada al mando en t = 10 min.'});
 terminar(m, '20', '0.002');
 o = sim(m);  [t,y] = senal(o,1);  [~,u] = senal(o,2);
 fprintf('Ej1 ZN:     Mp = %.1f %%  u max = %.3f\n', (max(y(t<10))-2)/2*100, max(u));
@@ -57,6 +61,13 @@ lin(m,'Sat/1','P_mod2/1');     lin(m,'P_mod2/1','L_mod/1');      lin(m,'L_mod/1'
 lin(m,'L/1','Sum_p/1');        lin(m,'Sum_p/1','Fr/1','e_pred'); lin(m,'Fr/1','Sum_e/3');
 lin(m,'Sat/1','u/1');          lin(m,'Ref/1','ref/1');
 alcance(m, 'Ref/1', 'L/1', [6.5 -1.3]);
+nota(m, {'CP6 Ej. 1 b) y c): PI por cancelación (Ti = T = 1, Kp = 5 = 10 V / 2 °C) + predictor de Smith.', ...
+    'Idea: el controlador no realimenta T (con retardo) sino una predicción sin retardo: e = r - y_m - Fr (T - y_md).', ...
+    '   y_m  = P u : modelo sin retardo (P_mod).   y_md = P e^{-0.8s} u : modelo con retardo (P_mod2 + L_mod).', ...
+    '   Si el modelo es exacto, T - y_md = efecto de las perturbaciones, y el lazo ve la planta sin retardo.', ...
+    'Fr = 1/1: Smith clásico. Fr = (0.741s+1)/(0.4s+1): Smith filtrado; cancela el polo lento s = -1 en la respuesta a d', ...
+    '   (la temperatura se recupera en 3.2 min en vez de 5.6). La respuesta a la referencia no cambia.', ...
+    'Robustez: cambiar G o L (planta real) y dejar fijo el modelo. Con L = 0.88 (+10 %) y Kp = 5 queda oscilando: usar Kp <= 3.'});
 terminar(m, '20', '0.002');
 for caso = {'clasico','filtrado'}
     if strcmp(caso{1}, 'clasico'), set_param([m '/Fr'], 'Numerator','1', 'Denominator','1'); end
@@ -101,6 +112,17 @@ for caso = {'zn','comp'}
     lin(m,[ctrl '/1'],'u/1');  lin(m,'Ref/1','ref/1');
     if strcmp(caso{1}, 'comp'), lin(m,[ctrl '/1'],'Gcomp/1');  lin(m,'Gcomp/1','Sum_e/3','y_c'); end
     alcance(m, 'Ref/1', 'Sum_h/1', [6.5 -1.3]);
+    if strcmp(caso{1}, 'zn')
+        txt = {'CP6 Ej. 2 a): planta con respuesta inversa h = Gv (G1 - G2) u = 2(-s+1)/((0.5s+1)(3s+1)(s+1)) u (cero en s = +1).', ...
+               'PI por Ziegler-Nichols: Ku = 1.62, Tu = 6.83 s -> Kc = 0.734, Ti = 5.69 s. Funciona, pero es lento (ts ~ 23 s, Mp 19 %).'};
+    else
+        txt = {'CP6 Ej. 2 b) y c): compensador de respuesta inversa + PID por módulo óptimo.', ...
+               'El compensador suma a la medición y_c = Gcomp u, con Gcomp = 0.5 Gv (1/(s+1) - 1/(3s+1)) = 2s/((0.5s+1)(3s+1)(s+1)).', ...
+               '   Así el controlador ve h + y_c = 2/((0.5s+1)(3s+1)(s+1)): sin el cero positivo. Gcomp(0) = 0: no altera el estado estable.', ...
+               'PID_MO = (3s+1)(s+1)/(2s) = 2 + 0.5/s + 1.5s (MO con Tu = 0.5). Responde 5 veces más rápido que el PI por ZN.', ...
+               'La salida real sigue mostrando el subpaso (h/r = (1-s)/(0.5s^2+s+1)): el compensador lo saca del lazo, no de la planta.'};
+    end
+    nota(m, [txt, {'Experimento: r = 1 en t = 1 y dist = 1 en t = 30 (se suma al mando antes de la válvula).'}]);
     terminar(m, '60', '0.005');
     o = sim(m);  [t,y] = senal(o,1);
     fprintf('Ej2 %-4s: Mp = %.1f %%  mínimo = %.3f  pico ante d = %+.3f\n', caso{1}, (max(y(t<30))-1)*100, min(y), max(y(t>=30))-1);
@@ -121,6 +143,12 @@ lin(m,'Ref/1','Sum_e/1','r');  lin(m,'Sum_e/1','Gc/1','e');  lin(m,'Gc/1','Gv/1'
 lin(m,'Gp/1','med/1','med');   lin(m,'Gp/1','Sum_e/2');      lin(m,'Gc/1','Gcomp/1');      lin(m,'Gcomp/1','Sum_e/3','y_c');
 lin(m,'Gc/1','man/1');         lin(m,'Ref/1','ref/1');
 alcance(m, 'Ref/1', 'Gp/1', [5.3 -1.3]);
+nota(m, {'CP6 Ej. 3: planta de fase no mínima Gv Gp = (-5s+1)/((s+1)(4s+1)) (cero en s = +0.2), Mp <= 4 %.', ...
+    'Un MO directo invertiría el cero positivo (controlador con polo en +0.2, inestable): primero se compensa.', ...
+    'Gp = 2.25/(4s+1) - 1.25  ->  K = (K1 t2 - K2 t1)/(t2 - t1) = 1.25  ->  Gcomp = 1.25 Gv (1 - 1/(4s+1)) = 5s/((s+1)(4s+1)).', ...
+    'Planta compensada (lo que ve Gc): med + y_c = 1/((s+1)(4s+1)).', ...
+    'Con MO clásico (a = 2) med tiene 10 % de sobrepaso, porque med/r = (1-5s)/(2s^2+2s+1) conserva el cero.', ...
+    'Con a = 2.5 (zeta = 0.79): Gc = (4s+1)/(2.5s) = 1.6 + 0.4/s y Mp = 3.6 %. El subpaso inicial (~ -1.08) es inevitable.'});
 terminar(m, '30', '0.01');
 o = sim(m);  [t,med] = senal(o,1);  [~,man] = senal(o,2);
 f = figure('Position',[100 100 800 550]);
@@ -146,6 +174,11 @@ lin(m,'Ref/1','Sum_e/1','r');  lin(m,'Sum_e/1','Gc_MO/1','e');  lin(m,'Gc_MO/1',
 lin(m,'G_a/1','Sum_y/1');      lin(m,'G_b/1','Sum_y/2');         lin(m,'Sum_y/1','y/1','y');    lin(m,'Sum_y/1','Sum_e/2');
 lin(m,'Gc_MO/1','Gcomp/1');    lin(m,'Gcomp/1','Sum_e/3','y_c'); lin(m,'Gc_MO/1','u/1');        lin(m,'Ref/1','ref/1');
 alcance(m, 'Ref/1', 'Sum_y/1', [5.4 -1.4]);
+nota(m, {'CP6 Ej. 4: G = k1/(Ts+1) - k2/(s(Ts+1)) = (k1 s - k2)/(s(Ts+1)). Cero en s = k2/k1: fase no mínima si k1 y k2 tienen el mismo signo.', ...
+    'Compensador: Gcomp = -k1/(Ts+1) quita la rama rápida de signo contrario -> el controlador ve G* = -k2/(s(Ts+1)).', ...
+    '   (No se usa la forma con integrador de la clase: un integrador en lazo abierto haría el esquema inestable ante perturbaciones.)', ...
+    'Controlador: G* ya integra, basta un P. Por MO con Tu = T: Gc = -1/(2 T k2) (acción inversa, porque G* tiene ganancia negativa).', ...
+    'k1, k2 y T se definen en Model Properties > Callbacks > InitFcn. Caso 1: k1 = 4, k2 = 2 (Mp 4.6 %). Caso 2: k1 = 2, k2 = 4 (Mp 4.3 %).'});
 terminar(m, '40', '0.01');
 for caso = {'k1 = 4; k2 = 2; T = 3;', 'k1 = 2; k2 = 4; T = 3;'}
     set_param(m, 'InitFcn', caso{1});  o = sim(m);  [~,y] = senal(o,1);
@@ -187,6 +220,12 @@ lin(m,'PID/1','Gp2/1');        lin(m,'Gp2/1','Sum_T/1'); lin(m,'XF/1','Gd2/1'); 
 lin(m,'PID/1','Mod_Gp1/1');    lin(m,'Mod_Gp1/1','Mod_Lp1/1');  lin(m,'Mod_Lp1/1','Sum_est/1');
 lin(m,'PID/1','Mod_rGp2/1');   lin(m,'Mod_rGp2/1','Sum_est/2'); lin(m,'Sum_T/1','Mod_r/1','T (medida)');  lin(m,'Mod_r/1','Sum_est/3');
 lin(m,'Sum_est/1','XDest/1','X_D inferida');  lin(m,'Sum_est/1','Sum_e/2');  lin(m,'PID/1','R/1');
+nota(m, {'CP6 Ej. 5: control inferencial de la composición del destilado X_D (no se mide) a partir de la temperatura del tope T (sí se mide).', ...
+    'Despejando X_F de la ecuación de T:  X_D inferida = (Gp1 - (Gd1/Gd2) Gp2) R + (Gd1/Gd2) T,  con Gd1/Gd2 = 4.5(60s+1)/(70s+1).', ...
+    '   Los dos retardos de 5 min se cancelan, así que el estimador es realizable. Con modelo exacto, X_D inferida = X_D real.', ...
+    'Bloques Mod_*: modelo usado por el estimador (fijo). Bloques Gp1, Gd1, Gp2, Gd2: planta real (cambiarlos para el inciso d).', ...
+    'PID ideal por ITAE para la referencia sobre Gp1 = 1.2 e^{-10s}/(30s+1): Kc = 2.06, Ti = 40.2, Td = 3.33 (ZN daba 99 % de sobrepaso).', ...
+    'Si el modelo no es exacto, el lazo lleva X_D inferida a la referencia pero X_D real queda con error permanente.'});
 terminar(m, '800', '0.1');
 o = sim(m);  [t,xd] = senal(o,1);  [~,xde] = senal(o,2);  [~,R] = senal(o,3);
 f = figure('Position',[100 100 800 550]);
@@ -199,6 +238,13 @@ fprintf('Ej5: Mp = %.2f %%, XD(399) = %.4f, XD(800) = %.4f\n', (max(xd(t<400))-1
 close_system(m, 0);
 
 %% ======================== funciones ========================
+function nota(m, lineas)
+    % Nota de texto explicativa debajo del diagrama (queda guardada en el .slx y sale en la imagen)
+    b = find_system(m, 'SearchDepth', 1, 'Type', 'Block');  p = cell2mat(get_param(b, 'Position'));
+    a = Simulink.Annotation(m, strjoin(lineas, newline));
+    a.Position = [min(p(:,1)) max(p(:,4))+50 min(p(:,1))+10 max(p(:,4))+60];
+    a.HorizontalAlignment = 'left';  a.BackgroundColor = '[1 1 0.88]';  a.FontSize = 11;
+end
 function nuevo(m)
     if bdIsLoaded(m), close_system(m, 0); end
     if exist([m '.slx'], 'file'), delete([m '.slx']); end
