@@ -5,10 +5,12 @@
 | Archivo | Qué es |
 |---|---|
 | `cp6.m` | Script MATLAB con todos los cálculos y simulaciones de los 5 ejercicios. Genera `ej1_*.png`, `ej2.png`, `ej3.png`, `ej4.png`, `ej5*.png`. |
-| `cp6_simulink.m` | Construye por código los modelos **Simulink** de los ej. 3 y 5 (`cp6_ej3.slx`, `cp6_ej5.slx`), los simula y genera `ej3_simulink.png` y `ej5_simulink.png`. |
-| `cp6_ej3.slx`, `cp6_ej5.slx` | Los modelos Simulink (se abren y modifican a mano). |
+| `cp6_ej1_zn.slx`, `cp6_ej1_smith.slx`, `cp6_ej2_zn.slx`, `cp6_ej2_comp.slx`, `cp6_ej3.slx`, `cp6_ej4.slx`, `cp6_ej5.slx` | **Modelos Simulink** de todos los ejercicios (se abren y modifican a mano). |
+| `cp6_simulink.m` | Construye los `.slx` por código, los simula, verifica que coincidan con `cp6.m`, exporta los diagramas (`diag_*.png`) y genera `ej3_simulink.png` y `ej5_simulink.png`. |
 
-Los lazos se arman con `connect` + `lsim` (discretizado con `c2d(...,'zoh')`, exacto para escalones). Los modelos Simulink dan los mismos resultados (ej. 3: $M_p=3.61\%$ en ambos).
+**Diagramas Simulink:** imágenes, tabla de bloques y parámetros en [`Diagramas_Simulink_CP5-CP6.md`](../Diagramas_Simulink_CP5-CP6.md).
+
+En `cp6.m` los lazos se arman con `connect` + `lsim` (discretizado con `c2d(...,'zoh')`, exacto para escalones). Los modelos Simulink dan los mismos resultados (por ejemplo, ej. 3: $M_p=3.61\%$ en ambos).
 Teoría: [`Resumen_Conf4-6.md`](../Resumen_Conf4-6.md), secciones 9–11.
 
 ---
@@ -37,6 +39,11 @@ $$G_cP=K_p\frac{s+1}{s}\cdot\frac{5}{s+1}=\frac{5K_p}{s}\ \Rightarrow\ \frac{Y}{
 
 $$K_p\cdot2\le10\ \Rightarrow\ \boxed{K_p=5,\quad T_i=1\ \text{min}}\qquad T_{LC}=\frac{T}{K_pK}=\frac{1}{25}=0.04\ \text{min}$$
 
+Modelos Simulink: `cp6_ej1_zn.slx` (PI por ZN) y `cp6_ej1_smith.slx` (Smith; el bloque `Fr` en `1/1` lo deja clásico).
+
+![diag_cp6_ej1_zn](diag_cp6_ej1_zn.png)
+![diag_cp6_ej1_smith](diag_cp6_ej1_smith.png)
+
 ![ej1_ab](ej1_ab.png)
 
 Con Smith la temperatura llega a 2 °C justo después del retardo, **sin sobrepaso**, y se asienta en 0.96 min (0.8 de retardo + 0.16), contra 8.7 min con ZN. El mando arranca exactamente en 10 V (el límite) y baja a 0.4 V.
@@ -54,7 +61,7 @@ Con Smith la temperatura llega a 2 °C justo después del retardo, **sin sobrepa
 
 **Conclusiones:**
 - Un error en $K$ o en $T$ apenas deforma la respuesta, y el integrador sigue dando error cero.
-- Un error del 10 % en el **retardo** **desestabiliza** el lazo con $K_p=5$: eso confirma lo visto en clase (los errores en $L$ son mucho peores que en $T$).
+- Un error del 10 % en el **retardo** **desestabiliza** el lazo con $K_p=5$: eso confirma lo visto en clase (los errores en $L$ son mucho peores que en $T$). En el modelo lineal la oscilación crece sin límite. En Simulink (`cp6_ej1_smith.slx`, que tiene la saturación de 0–10 V) queda una oscilación sostenida entre 1.9 y 2.1 °C que nunca se amortigua.
 - El problema es que $K_p=5$ pide un lazo 20 veces más rápido que el retardo. El predictor "promete" una planta sin retardo, pero la diferencia entre el retardo real y el modelado se ve como una perturbación de alta frecuencia que ese lazo tan rápido amplifica.
 - Con un lazo menos agresivo ($K_p=1$, $T_{LC}=L/4$) el sistema tolera los tres errores. Además, con `margin` se verificó que $K_p\le3$ es estable para **todas** las combinaciones simultáneas de ±10 % en $K$, $T$ y $L$. **Recomendación:** no usar el $K_p$ máximo que permite la saturación, sino uno con margen frente a errores en el retardo.
 
@@ -114,6 +121,11 @@ $$G_c=\frac{(0.5s+1)(3s+1)(s+1)}{2(0.5)s(0.5s+1)\cdot2}=\frac{(3s+1)(s+1)}{2s}=\
 
 Se implementa con filtro derivativo: `pid(2, 0.5, 1.5, 0.05)`.
 
+Modelos Simulink: `cp6_ej2_zn.slx` y `cp6_ej2_comp.slx`.
+
+![diag_cp6_ej2_zn](diag_cp6_ej2_zn.png)
+![diag_cp6_ej2_comp](diag_cp6_ej2_comp.png)
+
 ![ej2](ej2.png)
 
 | | $M_p$ | $t_s$ (2 %) | Pico ante $d=1$ |
@@ -164,6 +176,8 @@ $$K=\frac{K_1\tau_2-K_2\tau_1}{\tau_2-\tau_1}=\frac{0-1.25\cdot4}{0-4}=1.25$$
 ```
 
 (En Simulink: `cp6_ej3.slx`, un sumador `+ − −` con las entradas $r$, med e $y_c$.)
+
+![diag_cp6_ej3](diag_cp6_ej3.png)
 
 ## c) Cálculo de los bloques
 
@@ -225,6 +239,10 @@ Se resta a la realimentación la rama que causa la respuesta inversa (el términ
 $$\boxed{G_{comp}(s)=-\frac{k_1}{\tau s+1}}$$
 
 Se elige así, y no con la forma $K\left(\frac{1}{\tau s+1}-\frac{1}{s(\tau s+1)}\right)$ de clase, porque esa forma tendría un **integrador** en el compensador, que corre en lazo abierto y lo vuelve internamente inestable ante perturbaciones (ver Conf. 6). $G_{comp}$ es estable. Su ganancia estática ($-k_1$) no causa error: con la planta integradora, en estado estable $u\to0$ y entonces $y^*\to y$.
+
+En Simulink (`cp6_ej4.slx`; $k_1$, $k_2$ y $T$ se definen en el callback *InitFcn* del modelo):
+
+![diag_cp6_ej4](diag_cp6_ej4.png)
 
 ## c) Planta compensada
 
@@ -305,6 +323,8 @@ Con ITAE: $M_p=0.9\%$, $t_s=82$ min.
 ## c) Simulación (Simulink)
 
 `cp6_ej5.slx`: escalón unitario en la referencia en $t=10$ y en $X_F$ en $t=400$ min.
+
+![diag_cp6_ej5](diag_cp6_ej5.png)
 
 ![ej5_simulink](ej5_simulink.png)
 

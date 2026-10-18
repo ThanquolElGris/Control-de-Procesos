@@ -5,8 +5,12 @@
 | Archivo | Qué es |
 |---|---|
 | `cp5.m` | Script MATLAB con todos los cálculos y simulaciones. Genera `ej1.png`, `ej1_zoom.png`, `ej2_bc.png` y `ej2_d.png`. |
+| `cp5_ej1.slx`, `cp5_ej2_simple.slx`, `cp5_ej2_cascada.slx` | **Modelos Simulink** de cada esquema. El bloque `FF_on` (1/0) activa o desactiva el feedforward. |
+| `cp5_simulink.m` | Construye los `.slx` por código, los simula, verifica que coincidan con `cp5.m` y exporta los diagramas (`diag_*.png`). |
 
-**Cómo se simula:** todos los bloques son lineales, así que el diagrama Simulink equivale a armar el lazo con `connect` (bloques con `InputName`/`OutputName` y `sumblk`) y simularlo con `lsim`. Para que los retardos no hagan lenta la simulación se discretiza con `c2d(...,'zoh')` (exacto para entradas escalón).
+**Diagramas Simulink:** imágenes, tabla de bloques y parámetros en [`Diagramas_Simulink_CP5-CP6.md`](../Diagramas_Simulink_CP5-CP6.md).
+
+**Cómo se simula en `cp5.m`:** todos los bloques son lineales, así que el diagrama Simulink equivale a armar el lazo con `connect` (bloques con `InputName`/`OutputName` y `sumblk`) y simularlo con `lsim`. Para que los retardos no hagan lenta la simulación se discretiza con `c2d(...,'zoh')` (exacto para entradas escalón). Los modelos Simulink dan los mismos resultados.
 
 **Fórmulas que se usan** (ver [`Resumen_Conf4-6.md`](../Resumen_Conf4-6.md), secciones 6–8):
 
@@ -52,6 +56,8 @@ $$G_{ff}=-\frac{G_d}{G_mG_vG_p}=-\frac{K_dG_p}{G_vG_p}=-\frac{K_d}{G_v}=-4\,(0.5
 ## d) Esquema FB + FF
 
 La acción de control es $u=u_{fb}+u_{ff}$, con $u_{ff}=G_{ff}\,d$.
+
+![diag_cp5_ej1](diag_cp5_ej1.png)
 
 ![ej1](ej1.png)
 ![ej1_zoom](ej1_zoom.png)
@@ -113,6 +119,12 @@ La perturbación entra **dentro** de este lazo (antes de $G_1$), así que la cor
 $$K_u=0.808,\quad T_u=5.38\ \Rightarrow\ \text{serie: }0.505,\ 2.690,\ 0.672\ \Rightarrow\ \boxed{K_c=0.631\quad T_i=3.362\quad T_d=0.538}$$
 
 $T_u$ bajó de 8.5 a 5.4: el lazo interno "acelera" la planta que ve el externo.
+
+Lazo simple (`cp5_ej2_simple.slx`):
+![diag_cp5_ej2_simple](diag_cp5_ej2_simple.png)
+
+Cascada (`cp5_ej2_cascada.slx`):
+![diag_cp5_ej2_cascada](diag_cp5_ej2_cascada.png)
 
 ![ej2_bc](ej2_bc.png)
 
